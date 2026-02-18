@@ -224,6 +224,52 @@ Scripts querying PRO API must:
 - Flatten nested structures where possible
 - Format output for token-efficient LLM consumption
 
+## Analysis Workflow
+
+The skill must describe a workflow that guides the agent through starting and conducting a blockchain analysis task. The skill must instruct the agent to follow at least the phases below, in order. The workflow is not purely linear — the agent may revisit earlier phases as new information emerges (e.g. discovering during endpoint research that a different execution strategy is more appropriate).
+
+### 1. Identify the target chain
+
+- Determine which blockchain the user is asking about from the context of the user's query.
+- Default to chain ID `1` (Ethereum Mainnet) when the query does not specify a chain or clearly refers to Ethereum.
+- Use `get_chains_list` (MCP) or the Chainscout API to validate the chain ID and discover the corresponding Blockscout instance URL when needed.
+
+### 2. Choose the execution strategy
+
+- Evaluate the task against the [execution strategy](#execution-strategy) decision table and the [data source selection](#data-source-selection) guidance.
+- Select the appropriate combination of data source and execution method **before** making any data-fetching API calls.
+- The choice may be revised later if endpoint research (phase 4) reveals constraints (e.g. an endpoint is only available on PRO API, or the data volume requires scripting).
+
+### 3. Ensure tooling availability
+
+- **MCP tools**: If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install/enable it automatically (if the agent has the capability to do so in its host environment).
+- **PRO API**: If the strategy involves the PRO API, verify that `$BLOCKSCOUT_API_KEY` is configured in the environment. If it is not, instruct the user per the [PRO API key instructions](#user-instructions-pro-api-key).
+
+### 4. Discover required API endpoints
+
+When the task requires API endpoints beyond what MCP tools provide directly:
+
+1. **Fetch and cache** swagger files for the required services (if not already cached and fresh). Use the freshness check to decide whether cached files are up to date.
+2. **Search the swagger index** (e.g. grep by path, method, or summary keyword) to identify which endpoints are relevant to the task.
+3. **Read endpoint declarations** — use the `line_start-line_end` range from the index to read only the relevant section of the cached swagger file, obtaining full parameter lists, request/response schemas, and descriptions without loading the entire file into context.
+
+This phase may be skipped when MCP tools or already-known endpoints are sufficient for the task.
+
+### 5. Plan the actions
+
+- Based on the chosen strategy and discovered endpoints, produce a concrete action plan before execution.
+- For **script-based** strategies: outline what the script will do — which endpoints it will call, how it handles pagination, what filtering or aggregation it performs, and the expected output format.
+- For **direct tool calls**: list the sequence of tool calls and what information each call provides.
+- For **hybrid** approaches: specify which parts are handled by tool calls and which by a script.
+- For **LLM reasoning** strategies: identify which data must be retrieved first and what kind of analysis the agent will perform on the results.
+
+### 6. Execute
+
+- Carry out the plan: make tool calls, write and run ad-hoc scripts, or both.
+- Ad-hoc scripts must follow the requirements from [Modular structure](#modular-structure): stored in `artifacts/`, dependencies resolved before writing the script, prefer already-available tools and libraries.
+- Scripts that call any REST or JSON RPC endpoint (PRO API, MCP REST, BENS, Metadata, Multichain Aggregator, Stats, Chainscout) must apply [response transformation](#response-transformation) — extract relevant fields, flatten nested structures, format output for token-efficient LLM consumption.
+- After execution, the agent should interpret results in the context of the user's original question rather than presenting raw output.
+
 ## Chain-Specific Endpoints
 
 The MCP `unlock_blockchain_analysis` tool returns a catalog of chain-family-specific API endpoints accessible via `direct_api_call`:
