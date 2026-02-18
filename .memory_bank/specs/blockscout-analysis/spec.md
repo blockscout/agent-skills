@@ -239,6 +239,26 @@ Choose the execution method based on task complexity, determinism, and whether s
 
 The skill's decision table in `SKILL.md` must present both dimensions so the agent selects data source and execution strategy together.
 
+#### Tool equivalence and disambiguation
+
+Multiple API surfaces (MCP tools, PRO REST API, JSON RPC API, ETH RPC API) often expose endpoints that answer the same underlying question. For example, retrieving transaction details is possible via MCP `get_transaction_info`, PRO REST `api/v2/transactions/{hash}`, JSON RPC `gettxinfo`, and ETH RPC `eth_getTransactionByHash`. Without explicit guidance, the agent may call redundant tools, pick an inferior source, or waste context trying all of them.
+
+**Principle**: For each common data need where multiple API surfaces provide equivalent functionality, the skill must define a **tool equivalence group** — the set of tools/endpoints across all API surfaces that can fulfill that need. Each group must declare:
+
+- The **canonical (preferred) tool** and why it is preferred (e.g. enrichment, LLM-friendliness, no auth required).
+- **Alternatives** in priority order, with the distinguishing characteristic of each (e.g. "includes raw traces that MCP omits", "standard Ethereum RPC format for tooling compatibility", "50-item pages for bulk workflows").
+- **When to deviate** from the canonical choice — the specific conditions under which a lower-priority alternative is the better pick.
+
+The general priority chain across API surfaces is:
+
+> MCP tool → MCP `direct_api_call` → PRO REST API → JSON RPC API → ETH RPC API
+
+The agent selects the highest-priority tool that (a) is available in the current environment and (b) returns the fields required by the task. If the agent selects a lower-priority tool, it must have a concrete reason (e.g. a required field is absent from the higher-priority tool's response).
+
+**No redundant calls**: Once a tool is selected for a data need, the agent must not call equivalent tools on other API surfaces for the same data. The only exception is when the selected tool's response is confirmed to lack a field the task requires.
+
+The skill's Quick Decision Table in `SKILL.md` must surface this information — at minimum by listing alternatives alongside the primary tool for each data need. The full equivalence groups (with when-to-deviate guidance) should be available in supporting documentation loaded on demand.
+
 ### Response transformation
 
 Scripts querying PRO API must:
@@ -267,15 +287,19 @@ The skill must describe a workflow that guides the agent through starting and co
 - **MCP tools**: If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install/enable it automatically (if the agent has the capability to do so in its host environment). When the MCP server is not configured, the agent may use the [MCP tools cache](#mcp-tools-caching-and-indexing) (if present and fresh) to obtain tool names, descriptions, and input parameters; otherwise use `GET https://mcp.blockscout.com/v1/tools` and optionally update the cache.
 - **PRO API**: If the strategy involves the PRO API, verify that `$BLOCKSCOUT_API_KEY` is configured in the environment. If it is not, instruct the user per the [PRO API key instructions](#user-instructions-pro-api-key).
 
-### 4. Discover required API endpoints
+### 4. Discover and disambiguate tools and endpoints
 
-When the task requires API endpoints beyond what MCP tools provide directly:
+Multiple API surfaces often expose tools or endpoints that answer the same underlying question (e.g. transaction details are available via MCP `get_transaction_info`, PRO REST `api/v2/transactions/{hash}`, JSON RPC `gettxinfo`, and ETH RPC `eth_getTransactionByHash`). The agent must identify and resolve these overlaps before making data-fetching calls.
 
-1. **Fetch and cache** swagger files for the required services (if not already cached and fresh). Use the freshness check to decide whether cached files are up to date.
-2. **Search the swagger index** (e.g. grep by path, method, or summary keyword) to identify which endpoints are relevant to the task.
-3. **Read endpoint declarations** — use the `line_start-line_end` range from the index to read only the relevant section of the cached swagger file, obtaining full parameter lists, request/response schemas, and descriptions without loading the entire file into context.
+1. **Inventory candidate tools**: For each data need identified in the task, list the candidate tools and endpoints across all accessible API surfaces (MCP tools, PRO REST, JSON RPC, ETH RPC, supporting services).
+2. **Recognize overlap**: Identify when multiple candidates serve the same data need — these form a [tool equivalence group](#tool-equivalence-and-disambiguation).
+3. **Select using equivalence groups**: Consult the tool equivalence groups. Choose the highest-priority tool whose API surface is available and whose response covers the fields the task requires. Do not call redundant tools on other API surfaces for the same data need.
+4. **Discover additional endpoints** when the task requires API endpoints beyond what MCP tools or already-known endpoints cover:
+   1. **Fetch and cache** swagger files for the required services (if not already cached and fresh). Use the freshness check to decide whether cached files are up to date.
+   2. **Search the swagger index** (e.g. grep by path, method, or summary keyword) to identify which endpoints are relevant to the task.
+   3. **Read endpoint declarations** — use the `line_start-line_end` range from the index to read only the relevant section of the cached swagger file, obtaining full parameter lists, request/response schemas, and descriptions without loading the entire file into context.
 
-This phase may be skipped when MCP tools or already-known endpoints are sufficient for the task.
+Steps 1–3 apply to every task. Step 4 may be skipped when MCP tools or already-known endpoints are sufficient.
 
 ### 5. Plan the actions
 
