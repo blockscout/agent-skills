@@ -11,13 +11,31 @@ Create a modular AI agent skill for blockchain activity analysis using Blockscou
 - **MCP endpoint**: `https://mcp.blockscout.com/mcp` (native MCP protocol)
 - **REST API**: `https://mcp.blockscout.com/v1/{tool_name}?params` (HTTP GET)
 - **LLMs description**: `https://mcp.blockscout.com/llms.txt`
+- **Multichain**: the server is multichain; almost all tools accept a `chain_id` parameter to target a specific chain (use `get_chains_list` to discover supported chains).
 - **16 tools**: unlock_blockchain_analysis, get_chains_list, get_address_info, get_address_by_ens_name, get_tokens_by_address, nft_tokens_by_address, get_transactions_by_address, get_token_transfers_by_address, get_block_info, get_block_number, get_transaction_info, get_contract_abi, inspect_contract_code, read_contract, lookup_token_by_symbol, direct_api_call
 - **Responses**: LLM-friendly (pre-filtered, enriched), except `direct_api_call` which proxies raw Blockscout API
 - **Pagination**: opaque cursors, ~10 items/page (vs 50 for raw API)
 - **Enrichment examples**: address info includes first tx timestamp + ENS + metadata tags; block info includes tx hashes; transaction info includes EIP-4337 user operation IDs
-- **Centralized services access**: BENS (`bens.services.blockscout.com/api/v1`), Metadata (`metadata.services.blockscout.com/api/v1/`), Chainscout (`chains.blockscout.com/api/`)
+- **Centralized services access** (used internally by MCP tools; agents can also call them via `direct_api_call` or HTTP if needed):
+  - **BENS** (`bens.services.blockscout.com/api/v1`) — utilized by `get_address_by_ens_name` for ENS resolution.
+  - **Metadata** (`metadata.services.blockscout.com/api/v1/`) — utilized by `get_address_info` to attach address metadata (tags, reputation, labels).
+  - **Chainscout** (`chains.blockscout.com/api/`) — utilized by `get_chains_list` for initial information about chains hosted by the Blockscout team. The list returned by `get_chains_list` does not include the Blockscout instance URL per chain; when that is needed, call the Chainscout API with the specific chain id directly. Note: chains hosted by the Blockscout team are a subset of all instances registered in Chainscout.
 - **Advantage**: simplified cursor-based pagination more suitable for LLMs and scripts
 - **Disadvantage**: short pages (10 items vs 50) — requires 5x more requests for equivalent data volume
+
+#### Pagination (MCP): opaque cursor and simplified model
+
+MCP pagination is **simplified** compared to the raw Blockscout/PRO API so that agents and scripts don’t have to handle endpoint-specific keys.
+
+- **Opaque cursor**: The server turns the backend’s `next_page_params` (e.g. `block_number`, `index`, `items_count`) into a single string: the params are serialized to JSON and Base64URL-encoded. The agent only ever sees and passes this one **cursor** value; it never parses or constructs the underlying keys. That reduces context use and avoids wrong or partial params on the next call.
+- **Simplified cursor-based pagination**: Paginated MCP tools expose a single optional `cursor` parameter. To get the next page, the agent calls the same tool again with the same inputs and sets `cursor` to the value from the response (e.g. from `pagination.next_call.params.cursor`). No endpoint-specific query params or key names to remember.
+- **Contrast with PRO API**: The [PRO API](#pagination-pro-api) uses **keyset pagination** with a visible `next_page_params` object; the client must pass each of its keys (e.g. `block_number`, `index`, `items_count`) as query parameters, and the key set varies by endpoint. MCP hides that behind the opaque cursor and a uniform “pass cursor for next page” contract.
+
+#### Mandatory `unlock_blockchain_analysis` (MCP prerequisite)
+
+- **Rule**: Before calling any other Blockscout MCP tool, the agent must call `unlock_blockchain_analysis` first. This is mandatory for all MCP clients that do not reliably read the server’s tool instructions (e.g. many clients skip or ignore server-provided descriptions).
+- **Exception**: When the agent runs in **Claude Code**, this call is optional. Claude Code reads MCP server instructions correctly; `unlock_blockchain_analysis` exists as a workaround for clients that do not.
+- **Skill behavior**: The skill must instruct the agent to call `unlock_blockchain_analysis` once per session (or before the first MCP tool use) whenever the agent decides to use Blockscout MCP tools, unless the environment is known to be Claude Code.
 
 ### 2. Blockscout PRO API
 
@@ -134,6 +152,14 @@ The skill must use a hub-and-spoke pattern:
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) or PRO API (`api.blockscout.com`) via HTTP
 - For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the user to configure the native MCP server
 - The choice between script-based HTTP calls and direct MCP tool calls is governed by the execution strategy (see [Execution strategy](#execution-strategy) below)
+
+### Do not duplicate `unlock_blockchain_analysis` content in the skill
+
+- The output of `unlock_blockchain_analysis` is maintained by the MCP server and may be extended or changed over time (e.g. new endpoints, chain families, or usage notes).
+- **Skill docs (SKILL.md and files in `docs/`) must not copy or paraphrase that content.** They may only:
+  - Require calling `unlock_blockchain_analysis` first (per the rule above), and
+  - Point to the canonical source - the tool itself.
+- This keeps the skill stable when the server’s instructions change and avoids conflicting or outdated copies.
 
 ### Swagger caching and indexing
 
