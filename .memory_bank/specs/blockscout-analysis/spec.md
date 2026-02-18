@@ -157,8 +157,13 @@ The skill must use a hub-and-spoke pattern:
 ### MCP access strategy
 
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) or PRO API (`api.blockscout.com`) via HTTP
-- For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the user to configure the native MCP server
+- For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the agent to ensure the native MCP server is available (see [MCP server availability](#mcp-server-availability) below)
 - The choice between script-based HTTP calls and direct MCP tool calls is governed by the execution strategy (see [Execution strategy](#execution-strategy) below)
+
+### MCP server availability
+
+- When the skill leads the agent to use Blockscout MCP tools, the skill must instruct the agent to **ensure the Blockscout MCP server is available** before relying on MCP tool calls. The agent should either provide the user with instructions to install or enable the MCP server, or, if the agent has the ability, install or enable the server automatically.
+- The specification is **agent-agnostic**: the skill does not prescribe environment-specific steps (e.g. which config file or UI to use). It motivates the agent to achieve availability, assuming the agent knows how to install or enable an MCP server in its host environment.
 
 ### Do not duplicate `unlock_blockchain_analysis` content in the skill
 
