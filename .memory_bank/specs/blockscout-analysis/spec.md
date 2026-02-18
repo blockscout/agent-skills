@@ -157,6 +157,16 @@ The skill must use a hub-and-spoke pattern:
 - **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts in such a manner that (a) **before** writing the script, the agent ensures all dependencies are resolved; (b) the agent **prefers alternatives** from existing libraries, packages, or CLI tools already on the host machine rather than suggesting the user install new dependencies; (c) the agent suggests the user install dependencies **only if** there is no suitable alternative available on the host.
 - **Tool script dependency errors**: If a script in `scripts/` detects a missing dependency (runtime, interpreter, or library), it must **return an error string** that (1) states which dependency is missing and (2) includes an explicit statement on how to install that dependency (e.g. package name and install command). It must not fail silently or with a generic message.
 
+### README in skill directory
+
+The skill must include a **README file in the skill directory** (e.g. `README.md` at the root of the skill folder). This file is the human-facing overview of the skill and must cover:
+
+- **The skill's goal** — what the skill is for and what outcomes it enables.
+- **Key ideas of the skill** — core concepts, decision framework (data source and execution strategy), and how the skill guides the agent.
+- **Directory structure** — a concise description or diagram of the skill directory layout (e.g. `SKILL.md`, `docs/`, `scripts/`, and how they are used).
+
+The README must not duplicate long reference material that belongs in `SKILL.md` or `docs/`; it should orient the reader and point to those resources where appropriate.
+
 ### Version in SKILL.md
 
 The skill must declare its version in the `SKILL.md` file (e.g. at the top or in a dedicated section) so that updates can be identified easily.
