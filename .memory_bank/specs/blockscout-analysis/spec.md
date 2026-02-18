@@ -10,7 +10,6 @@ Create a modular AI agent skill for blockchain activity analysis using Blockscou
 
 - **MCP endpoint**: `https://mcp.blockscout.com/mcp` (native MCP protocol)
 - **REST API**: `https://mcp.blockscout.com/v1/{tool_name}?params` (HTTP GET)
-- **LLMs description**: `https://mcp.blockscout.com/llms.txt`
 - **Multichain**: the server is multichain; almost all tools accept a `chain_id` parameter to target a specific chain (use `get_chains_list` to discover supported chains).
 - **16 tools**: unlock_blockchain_analysis, get_chains_list, get_address_info, get_address_by_ens_name, get_tokens_by_address, nft_tokens_by_address, get_transactions_by_address, get_token_transfers_by_address, get_block_info, get_block_number, get_transaction_info, get_contract_abi, inspect_contract_code, read_contract, lookup_token_by_symbol, direct_api_call
 - **Responses**: LLM-friendly (pre-filtered, enriched), except `direct_api_call` which proxies raw Blockscout API
@@ -36,6 +35,12 @@ MCP pagination is **simplified** compared to the raw Blockscout/PRO API so that 
 - **Rule**: Before calling any other Blockscout MCP tool, the agent must call `unlock_blockchain_analysis` first. This is mandatory for all MCP clients that do not reliably read the server’s tool instructions (e.g. many clients skip or ignore server-provided descriptions).
 - **Exception**: When the agent runs in **Claude Code**, this call is optional. Claude Code reads MCP server instructions correctly; `unlock_blockchain_analysis` exists as a workaround for clients that do not.
 - **Skill behavior**: The skill must instruct the agent to call `unlock_blockchain_analysis` once per session (or before the first MCP tool use) whenever the agent decides to use Blockscout MCP tools, unless the environment is known to be Claude Code.
+
+#### MCP tool documentation and discovery
+
+- **API reference**: The skill must instruct the agent to obtain more details on MCP tools from the Blockscout MCP Server REST API documentation: [https://raw.githubusercontent.com/blockscout/mcp-server/refs/heads/main/API.md](https://raw.githubusercontent.com/blockscout/mcp-server/refs/heads/main/API.md). That document contains concise descriptions of all MCP tools, parameters, and response shapes.
+- **When MCP is configured**: If the Blockscout MCP server is configured (e.g. `https://mcp.blockscout.com/mcp`), tool names and descriptions are already supplied in the agent’s context by the MCP client; the agent may still use the API reference for parameter details and examples.
+- **When MCP is not configured**: If the MCP server is not configured, the agent can discover tools and their schemas via the REST list endpoint: `GET https://mcp.blockscout.com/v1/tools`. The skill must instruct the agent to use this URL when tool descriptions are not otherwise available.
 
 ### 2. Blockscout PRO API
 
@@ -200,6 +205,13 @@ The skill must declare its version in the `SKILL.md` file (e.g. at the top or in
 - Freshness check: compare cached version against latest Blockscout (or blockscout-rs) release on GitHub, per service (see [API Documentation Sources](#api-documentation-sources))
 - Alternative approach: probe API endpoints directly with HTTP requests to inspect response structure
 
+### MCP tools caching and indexing
+
+- **Scope**: When the MCP server is not configured, the agent can use a cached copy of the tools list instead of calling `GET https://mcp.blockscout.com/v1/tools` on every run. Caching reduces latency and keeps tool metadata available offline.
+- **Download and index**: A deterministic script must download the response of `GET https://mcp.blockscout.com/v1/tools` and build an index file. The index must allow the agent to find each tool by name and to locate its full description and input-parameter schema within the cached file (e.g. via a line range or offset — a “cursor” into the cached file).
+- **Using the cache**: The skill must instruct the agent to use the cached tools index to: (1) read tool names and short descriptions from the index; (2) use the cursor (line range or offset) to read only the relevant section of the cached file for a chosen tool, including its full description and list of input parameters, without loading the entire tools payload into context.
+- **Freshness check**: The response of `unlock_blockchain_analysis` includes the MCP server version. When building or using the cache, the script must store the server version that was current at cache build time. Freshness is checked by calling `unlock_blockchain_analysis` (e.g. `GET https://mcp.blockscout.com/v1/unlock_blockchain_analysis`) and comparing the returned server version with the version stored for the cached file. If the server version differs from the cached version, the cached tools file and index must be updated (re-download and re-index).
+
 ### Decision framework
 
 The skill must guide the agent through two orthogonal decisions: **which data source** to use and **how to execute** the query.
@@ -252,7 +264,7 @@ The skill must describe a workflow that guides the agent through starting and co
 
 ### 3. Ensure tooling availability
 
-- **MCP tools**: If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install/enable it automatically (if the agent has the capability to do so in its host environment).
+- **MCP tools**: If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install/enable it automatically (if the agent has the capability to do so in its host environment). When the MCP server is not configured, the agent may use the [MCP tools cache](#mcp-tools-caching-and-indexing) (if present and fresh) to obtain tool names, descriptions, and input parameters; otherwise use `GET https://mcp.blockscout.com/v1/tools` and optionally update the cache.
 - **PRO API**: If the strategy involves the PRO API, verify that `$BLOCKSCOUT_API_KEY` is configured in the environment. If it is not, instruct the user per the [PRO API key instructions](#user-instructions-pro-api-key).
 
 ### 4. Discover required API endpoints
