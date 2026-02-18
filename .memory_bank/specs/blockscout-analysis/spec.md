@@ -52,6 +52,13 @@ MCP pagination is **simplified** compared to the raw Blockscout/PRO API so that 
 - **Responses**: raw JSON, NOT LLM-friendly — scripts must filter and transform
 - **Coverage**: almost full set of API endpoints available on individual Blockscout instances
 
+#### User instructions (PRO API key)
+
+The skill must instruct the user to:
+
+1. **Obtain an API key**: Go to the [Blockscout Development Portal](https://dev.blockscout.com) and generate an API key there.
+2. **Configure the environment**: Configure the current environment so the key is available for the agent and for scripts written by the agent (e.g. by setting `$BLOCKSCOUT_API_KEY` or equivalent in the shell or project environment).
+
 #### Pagination (PRO API)
 
 PRO API uses **keyset pagination**: each response includes a `next_page_params` object. To get the next page, pass those parameters as query arguments on the same endpoint.
