@@ -45,8 +45,8 @@ MCP pagination is **simplified** compared to the raw Blockscout/PRO API so that 
 ### 2. Blockscout PRO API
 
 - **Base URL**: `https://api.blockscout.com`
-- **Registration**: https://dev.blockscout.com
-- **Documentation**: https://docs.blockscout.com/devs/pro-api.md
+- **Registration**: <https://dev.blockscout.com>
+- **Documentation**: <https://docs.blockscout.com/devs/pro-api.md>
 - **Auth**: `$BLOCKSCOUT_API_KEY` environment variable (`proapi_xxxxxxxx` format), via `apikey` query param or `Authorization` header
 - **Multi-chain**: addresses chains through chain_id in URL path
 - **Route patterns**:
@@ -77,6 +77,7 @@ PRO API uses **keyset pagination**: each response includes a `next_page_params` 
 1. **Initial call** (no query params):
 
    Response:
+
    ```json
    {
      "items": [ ... ],
@@ -92,6 +93,7 @@ PRO API uses **keyset pagination**: each response includes a `next_page_params` 
    `api/v2/transactions?block_number=24479322&index=238&items_count=50`
 
    Response:
+
    ```json
    {
      "items": [ ... ],
@@ -129,13 +131,13 @@ Other paginated endpoints may use different keys in `next_page_params`; always t
 
 ### JSON RPC API
 
-- Documentation: https://docs.blockscout.com/devs/apis/rpc.md
+- Documentation: <https://docs.blockscout.com/devs/apis/rpc.md>
 - Modules: account, logs, token, stats, block, contract, transaction
-- Per-module docs: https://docs.blockscout.com/devs/apis/rpc/{module}.md
+- Per-module docs: <https://docs.blockscout.com/devs/apis/rpc/{module}.md>
 
 ### ETH RPC API
 
-- Documentation: https://docs.blockscout.com/devs/apis/rpc/eth-rpc.md
+- Documentation: <https://docs.blockscout.com/devs/apis/rpc/eth-rpc.md>
 - Standard Ethereum JSON-RPC
 
 ### Service Swaggers
@@ -155,6 +157,7 @@ Other paginated endpoints may use different keys in `next_page_params`; always t
 ### Modular structure
 
 The skill must use a hub-and-spoke pattern:
+
 - `SKILL.md` — concise entry point with decision tables (data source + execution strategy) and quick references
 - Supporting docs in `docs/` — loaded on demand by the agent, one per topic
 - Scripts in `scripts/` — reusable deterministic tooling only (e.g. swagger processing). The skill must **not** mix these tools with ad-hoc scripts.
@@ -219,6 +222,7 @@ The skill must guide the agent through two orthogonal decisions: **which data so
 #### Data source selection
 
 Choose the data source based on coverage and response quality:
+
 - MCP REST API first (LLM-friendly, enriched, no auth)
 - PRO API as fallback (full coverage, 50-item pages, auth required)
 - Services for specialized data (tags, batch ENS, stats, cross-chain)
@@ -269,6 +273,7 @@ Blockscout infrastructure may expose native coin or token prices in some respons
 ### Response transformation
 
 Scripts querying PRO API must:
+
 - Extract only fields relevant to the user's question
 - Flatten nested structures where possible
 - Format output for token-efficient LLM consumption
