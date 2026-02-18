@@ -154,6 +154,10 @@ The skill must use a hub-and-spoke pattern:
 - Supporting docs in `docs/` — loaded on demand by the agent, one per topic
 - Scripts in `scripts/` — reusable deterministic tooling (swagger processing, common analysis patterns); agents may also generate ad-hoc scripts at runtime for task-specific multi-step flows
 
+### Version in SKILL.md
+
+The skill must declare its version in the `SKILL.md` file (e.g. at the top or in a dedicated section) so that updates can be identified easily.
+
 ### MCP access strategy
 
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) or PRO API (`api.blockscout.com`) via HTTP
