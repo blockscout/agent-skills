@@ -152,7 +152,8 @@ Other paginated endpoints may use different keys in `next_page_params`; always t
 The skill must use a hub-and-spoke pattern:
 - `SKILL.md` — concise entry point with decision tables (data source + execution strategy) and quick references
 - Supporting docs in `docs/` — loaded on demand by the agent, one per topic
-- Scripts in `scripts/` — reusable deterministic tooling (swagger processing, common analysis patterns); agents may also generate ad-hoc scripts at runtime for task-specific multi-step flows
+- Scripts in `scripts/` — reusable deterministic tooling only (swagger processing, common analysis patterns). The skill must **not** mix these tools with ad-hoc scripts.
+- Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in a **separate directory** (e.g. `artifacts/`), not in `scripts/`.
 
 ### Version in SKILL.md
 
