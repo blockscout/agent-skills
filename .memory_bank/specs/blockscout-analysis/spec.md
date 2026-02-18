@@ -152,8 +152,10 @@ Other paginated endpoints may use different keys in `next_page_params`; always t
 The skill must use a hub-and-spoke pattern:
 - `SKILL.md` — concise entry point with decision tables (data source + execution strategy) and quick references
 - Supporting docs in `docs/` — loaded on demand by the agent, one per topic
-- Scripts in `scripts/` — reusable deterministic tooling only (swagger processing, common analysis patterns). The skill must **not** mix these tools with ad-hoc scripts.
+- Scripts in `scripts/` — reusable deterministic tooling only (e.g. swagger processing). The skill must **not** mix these tools with ad-hoc scripts.
 - Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in a **separate directory** (e.g. `artifacts/`), not in `scripts/`.
+- **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts in such a manner that (a) **before** writing the script, the agent ensures all dependencies are resolved; (b) the agent **prefers alternatives** from existing libraries, packages, or CLI tools already on the host machine rather than suggesting the user install new dependencies; (c) the agent suggests the user install dependencies **only if** there is no suitable alternative available on the host.
+- **Tool script dependency errors**: If a script in `scripts/` detects a missing dependency (runtime, interpreter, or library), it must **return an error string** that (1) states which dependency is missing and (2) includes an explicit statement on how to install that dependency (e.g. package name and install command). It must not fail silently or with a generic message.
 
 ### Version in SKILL.md
 
@@ -180,11 +182,12 @@ The skill must declare its version in the `SKILL.md` file (e.g. at the top or in
 
 ### Swagger caching and indexing
 
+- **Scope**: Scripts that download swaggers and check their freshness in cache must work for **all** services that expose swagger documentation: the main Blockscout REST API (blockscout), **BENS**, **metadata**, **stats**, and **multichain aggregator**. They must not be limited to the REST API only.
 - Swagger files are large (10,000+ lines) — the skill must instruct the agent to cache them
 - A deterministic script must index cached swagger files
 - Index format: `METHOD /path | summary | line_start-line_end` — compact, grep-friendly
-- Index files enable quick endpoint discovery; agent reads the swagger line range for full details
-- Freshness check: compare cached version against latest Blockscout release on GitHub
+- **Using the index**: The skill must instruct the agent how to use cached swagger indices to discover API endpoint declarations. Specifically: (1) search or grep the index (e.g. by path, method, or summary) to find the relevant index line; (2) from that line obtain the swagger file path and the `line_start-line_end` range; (3) read only that line range in the corresponding cached swagger file to get the full endpoint declaration (parameters, request/response schemas, etc.). This avoids loading entire swagger files into context.
+- Freshness check: compare cached version against latest Blockscout (or blockscout-rs) release on GitHub, per service (see [API Documentation Sources](#api-documentation-sources))
 - Alternative approach: probe API endpoints directly with HTTP requests to inspect response structure
 
 ### Decision framework
