@@ -26,6 +26,9 @@ The script:
 1. Calls `unlock_blockchain_analysis` to get the current MCP server version.
 2. Compares with the cached version.
 3. Downloads and pretty-prints `tools.json` if the version differs or no cache exists.
+4. **Automatically re-indexes** by invoking `index-mcp-tools.py` after download.
+
+You can also run `index-mcp-tools.py` separately if needed (e.g. after manual edits to the cached file).
 
 ## Indexing Tools
 

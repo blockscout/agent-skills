@@ -50,7 +50,9 @@ Registry of all chains where Blockscout is deployed. Provides explorer URLs.
 
 **No swagger** — API reverse-engineered from [source](https://github.com/blockscout/chainscout/tree/main/app/api/chains).
 
-**Important**: The MCP tool `get_chains_list` returns chain IDs and names but does **not** return Blockscout explorer URLs. When you need the explorer URL for a specific chain, call the Chainscout API directly with `GET /chains?chain_ids={id}`.
+**Important**: `get_chains_list` (MCP) internally queries the Chainscout registry. Both share the same underlying data, but `get_chains_list` returns a curated subset (Blockscout-team chains) without explorer URLs. Chainscout contains additional community-deployed and third-party instances.
+
+When you need the explorer URL for a specific chain, call the Chainscout API directly with `GET /chains?chain_ids={id}`.
 
 ## Stats
 

@@ -272,6 +272,14 @@ process_service() {
     fetch_swagger "$service" "$latest" "$effective_variant" || return 1
     update_version_json "$service" "$latest" "$effective_variant"
 
+    # Re-index after download
+    local index_script="$SCRIPT_DIR/index-swagger.py"
+    if [ -f "$index_script" ]; then
+        echo "  Re-indexing..."
+        python3 "$index_script" "$CACHE_DIR/$service/swagger.yaml" \
+            --output "$CACHE_DIR/$service/swagger.index"
+    fi
+
     echo "  OK (v$latest)"
 }
 

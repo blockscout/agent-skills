@@ -7,7 +7,7 @@ Choose the execution method based on task complexity, determinism, and whether s
 | Signal | Strategy | When to Use | Example |
 |--------|----------|-------------|---------|
 | Simple lookup, 1–3 calls, no post-processing | **Direct tool calls** | Answer returned directly by an API endpoint | Get a block number, resolve an ENS name, fetch a transaction |
-| Deterministic multi-step flow with loops, date ranges, aggregation | **Script** | Logic is well-defined; inefficient as sequential LLM calls | Iterate over months to compute APY, paginate all token holders, scan tx history with filters |
+| Deterministic multi-step flow with loops, date ranges, aggregation, or conditional branching | **Script** | Logic is well-defined; inefficient or error-prone as sequential LLM calls | Iterate over months to compute APY, paginate all token holders, scan tx history with filters |
 | Simple retrieval + math, normalization, or filtering | **Hybrid** (tool call + script) | API provides raw data needing computation | Get token balances via API, then normalize decimals and filter by value in a script |
 | Semantic understanding, code analysis, subjective judgment | **LLM reasoning over results** | Cannot be answered by a deterministic algorithm | Check if a contract has blacklisting, determine if a token is official, classify a transaction |
 | Large data volume with known filtering criteria | **Script against PRO API** | 50-item pages are 5x more efficient than MCP's 10 | Process many pages of data with programmatic filters |

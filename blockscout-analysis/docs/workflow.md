@@ -75,7 +75,7 @@ Carry out the plan:
 
 1. **Make tool calls** or **write and run ad-hoc scripts** (or both).
 2. Ad-hoc scripts go in `artifacts/` — resolve dependencies before writing, prefer existing host tools.
-3. Scripts querying PRO API or services must apply **response transformation** — extract relevant fields, flatten nested structures, format for LLM consumption.
+3. Scripts querying any REST or JSON RPC endpoint (PRO API, MCP REST, BENS, Metadata, Multichain Aggregator, Stats, Chainscout) must apply **response transformation** — extract relevant fields, flatten nested structures, format for LLM consumption.
 4. **Interpret results** in the context of the user's original question rather than presenting raw output.
 
 ## Iteration

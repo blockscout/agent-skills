@@ -206,6 +206,7 @@ The skill must declare its version in the `SKILL.md` file (e.g. at the top or in
 - Index format: `METHOD /path | summary | line_start-line_end` — compact, grep-friendly
 - **Using the index**: The skill must instruct the agent how to use cached swagger indices to discover API endpoint declarations. Specifically: (1) search or grep the index (e.g. by path, method, or summary) to find the relevant index line; (2) from that line obtain the swagger file path and the `line_start-line_end` range; (3) read only that line range in the corresponding cached swagger file to get the full endpoint declaration (parameters, request/response schemas, etc.). This avoids loading entire swagger files into context.
 - Freshness check: compare cached version against latest Blockscout (or blockscout-rs) release on GitHub, per service (see [API Documentation Sources](#api-documentation-sources))
+- **Atomic update**: If a freshness check triggers a swagger re-download, the cached swagger file and its index must be updated together — the fetch script must re-index the downloaded file immediately after saving it, before exiting. This matches the behavior of the MCP tools fetch script and ensures the index never points at stale line ranges.
 - Alternative approach: probe API endpoints directly with HTTP requests to inspect response structure
 
 ### MCP tools caching and indexing

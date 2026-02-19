@@ -21,10 +21,11 @@ When your task requires native MCP tool calls (e.g. `read_contract`, iterative c
 
 ## `unlock_blockchain_analysis` Prerequisite
 
-**Before calling any other Blockscout MCP tool**, call `unlock_blockchain_analysis` once per session.
+**Before calling any other Blockscout MCP tool**, call `unlock_blockchain_analysis` once per session (or before the first MCP tool use, if session boundaries are unclear).
 
 - This is mandatory for all MCP clients that do not reliably read server-provided tool descriptions.
 - **Exception**: In **Claude Code**, this call is optional — Claude Code reads MCP server instructions correctly.
+- **Defer the call** until MCP tools are actually needed — do not call it preemptively at session start if no MCP tools will be used.
 - The tool's response contains operational rules, chain guidance, and the direct API endpoint catalog. **That content is the canonical source** — do not duplicate it; refer to it when needed.
 
 ## Tool Catalog
@@ -46,6 +47,10 @@ When your task requires native MCP tool calls (e.g. `read_contract`, iterative c
 | `read_contract` | chain_id, address, abi, function_name | No | Call a contract function (view/pure) |
 | `lookup_token_by_symbol` | chain_id, symbol | No | Search tokens by symbol or name |
 | `direct_api_call` | chain_id, endpoint_path | Yes | Proxy to any Blockscout API endpoint |
+
+**Note on `direct_api_call`**: Unlike other MCP tools, `direct_api_call` is a raw proxy — it does not enrich, filter, or optimize responses. Expect raw Blockscout API JSON, similar to PRO API responses.
+
+This table summarizes tool names and interfaces. For operational rules, chain guidance, and the complete direct API endpoint catalog, consult the `unlock_blockchain_analysis` output.
 
 ## REST API Usage Pattern
 
@@ -97,6 +102,8 @@ If the MCP server is not configured in your environment:
 
 For full tool documentation including parameters, response shapes, and examples:
 - [MCP Server API Reference](https://raw.githubusercontent.com/blockscout/mcp-server/refs/heads/main/API.md)
+
+**Even when MCP is configured** and tool names are available in your context, consult this reference for parameter details and usage examples that may not be in the tool descriptions.
 
 ## Chain-Specific Endpoints
 

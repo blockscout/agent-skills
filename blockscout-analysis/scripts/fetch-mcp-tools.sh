@@ -169,6 +169,10 @@ main() {
 
     # Update version metadata
     update_version_json "${server_version:-unknown}" "$count"
+
+    # Re-index after download
+    echo "  Re-indexing..."
+    python3 "$SCRIPT_DIR/index-mcp-tools.py"
     echo "  OK"
 }
 

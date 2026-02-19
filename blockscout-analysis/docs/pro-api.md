@@ -8,6 +8,8 @@ The Blockscout PRO API provides full endpoint coverage with 50-item pages. Use i
 https://api.blockscout.com
 ```
 
+**Documentation**: [PRO API docs](https://docs.blockscout.com/devs/pro-api.md)
+
 Multichain: chain ID is specified in the URL path.
 
 ## Authentication
@@ -74,11 +76,15 @@ Each paginated response includes a `next_page_params` object. To get the next pa
 
 Query format: `?module={module}&action={action}&{params}`
 
+**Full parameter docs**: [JSON RPC API overview](https://docs.blockscout.com/devs/apis/rpc.md) and per-module docs at `https://docs.blockscout.com/devs/apis/rpc/{module}.md` (e.g. [account](https://docs.blockscout.com/devs/apis/rpc/account.md), [transaction](https://docs.blockscout.com/devs/apis/rpc/transaction.md), [block](https://docs.blockscout.com/devs/apis/rpc/block.md)).
+
 ## ETH RPC Methods
 
 Standard Ethereum JSON-RPC methods supported via `/{chain_id}/json-rpc`:
 
 `eth_blockNumber`, `eth_getBalance`, `eth_getTransactionCount`, `eth_getCode`, `eth_getStorageAt`, `eth_gasPrice`, `eth_maxPriorityFeePerGas`, `eth_chainId`, `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_sendRawTransaction`, `eth_getBlockByNumber`, `eth_getBlockByHash`, `eth_call`, `eth_estimateGas`, `eth_getLogs`
+
+**Full ETH RPC docs**: [ETH RPC API reference](https://docs.blockscout.com/devs/apis/rpc/eth-rpc.md)
 
 ## Endpoint Discovery via Swagger
 

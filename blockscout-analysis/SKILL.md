@@ -60,7 +60,7 @@ Full equivalence groups with when-to-deviate guidance: [tool-equivalence-groups.
 | Signal | Strategy |
 |--------|----------|
 | 1–3 calls, no post-processing | **Direct tool calls** (MCP tool or HTTP) |
-| Deterministic loops, date ranges, aggregation | **Script** (ad-hoc, stored in `artifacts/`) |
+| Deterministic loops, date ranges, aggregation, conditional branching | **Script** (ad-hoc, stored in `artifacts/`) |
 | Simple retrieval + math/normalization/filtering | **Hybrid** (tool call + script) |
 | Semantic understanding, code analysis, judgment | **LLM reasoning** over API results |
 | Large data volume, known filters | **Script against PRO API** (50 items/page) |

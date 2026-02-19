@@ -14,6 +14,19 @@ Swagger files are the primary source of truth for PRO API and service endpoint d
 
 All swagger files are in the [blockscout/swaggers](https://github.com/blockscout/swaggers) repository.
 
+## Chain-Specific Variants (Blockscout REST Only)
+
+The blockscout REST API swagger has a **default** variant (base API for all chains) and **15 chain-specific variants** that add extra endpoints and fields:
+
+> `arbitrum`, `ethereum`, `optimism`, `scroll`, `zksync`, `polygon_zkevm`, `shibarium`, `stability`, `zilliqa`, `zetachain`, `rsk`, `blackfort`, `filecoin`, `neon`, `optimism-celo`
+
+Fetch a variant with:
+```bash
+./scripts/fetch-swagger.sh blockscout --variant arbitrum
+```
+
+**Important**: Swagger files do not reflect the full set of chain-specific endpoints. The MCP `unlock_blockchain_analysis` tool output contains a more complete catalog of chain-family endpoints. Always consult that tool's output alongside swagger indices for chain-specific endpoint discovery.
+
 ## Fetching Swaggers
 
 Use `scripts/fetch-swagger.sh` to download and cache swagger files:
@@ -32,11 +45,11 @@ Use `scripts/fetch-swagger.sh` to download and cache swagger files:
 ./scripts/fetch-swagger.sh blockscout --variant arbitrum
 ```
 
-The script checks freshness against the latest GitHub release for each service. If the cached version matches, it skips the download.
+The script checks freshness against the latest GitHub release for each service. If the cached version matches, it skips the download. When a download does occur, the script **automatically re-indexes** the downloaded swagger immediately, so the `.index` file is always consistent with the cached YAML.
 
 ## Indexing Swaggers
 
-Use `scripts/index-swagger.py` to build compact, grep-friendly indices:
+`fetch-swagger.sh` re-indexes automatically after each download. Run `scripts/index-swagger.py` manually only when needed (e.g. after editing a cached swagger file or to rebuild all indices at once):
 
 ```bash
 # Index a single file
