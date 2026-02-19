@@ -8,7 +8,7 @@ Defaults to cache/mcp-tools/tools.json relative to skill directory.
 Output: cache/mcp-tools/tools.index
 
 Index format:
-    tool_name | description (truncated) | line_start-line_end
+    tool_name | description | line_start-line_end
 """
 
 import sys
@@ -17,23 +17,15 @@ import json
 import re
 from datetime import datetime, timezone
 
-MAX_DESC_LEN = 120
-
-
-def truncate_description(desc):
-    """Truncate description to first sentence or MAX_DESC_LEN chars."""
+def clean_description(desc):
+    """Clean description text for single-line index output."""
     if not desc:
         return ""
-    # Take first sentence
-    first = desc.split(". ")[0]
-    if first != desc:
-        first += "."
-    # Also split on newlines
-    first = first.split("\n")[0]
-    # Truncate to max length
-    if len(first) > MAX_DESC_LEN:
-        first = first[: MAX_DESC_LEN - 3] + "..."
-    return first
+    # Collapse all whitespace runs into single spaces, strip edges
+    cleaned = re.sub(r"\s+", " ", desc).strip()
+    # Escape pipe characters to protect the delimiter format
+    cleaned = cleaned.replace("|", "\\|")
+    return cleaned
 
 
 def find_tool_boundaries(lines):
@@ -86,7 +78,7 @@ def find_tool_boundaries(lines):
                 if match:
                     current_desc = match.group(1)
                     # Unescape JSON string
-                    current_desc = current_desc.replace("\\n", " ").replace('\\"', '"')
+                    current_desc = current_desc.replace("\\n", " ").replace("\\t", " ").replace('\\"', '"')
 
             depth += open_braces - close_braces
 
@@ -118,7 +110,7 @@ def index_mcp_tools(filepath):
 
     entries = []
     for start, end, name, desc in boundaries:
-        entries.append((name, truncate_description(desc), start, end))
+        entries.append((name, clean_description(desc), start, end))
 
     return len(data), entries
 
