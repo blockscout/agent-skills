@@ -83,19 +83,21 @@ def _try_pyyaml(filepath, lines):
             if not isinstance(details, dict):
                 continue
             summary = details.get("summary", "")
+            if summary:
+                # Normalise multi-line block scalars to their first line
+                summary = summary.split("\n")[0]
             if not summary:
                 summary = details.get("operationId", "")
             if not summary:
                 summary = details.get("description", "")
                 if summary:
-                    # Truncate to first sentence
-                    summary = summary.split(".")[0].split("\n")[0]
+                    summary = summary.split("\n")[0]
 
             key = (path, method_lower)
             start, end = line_ranges.get(key, (0, 0))
             entries.append((method_lower.upper(), path, summary, start, end))
 
-    entries.sort(key=lambda e: e[3])
+    entries.sort(key=lambda e: (e[1], e[0]))
     return entries
 
 
@@ -199,6 +201,7 @@ def _index_state_machine(lines):
     path_indent = None
     method_indent = None
     prop_indent = None
+    collecting_block = None  # "summary" | "description" | None
 
     for i, raw_line in enumerate(lines):
         lineno = i + 1
@@ -210,6 +213,16 @@ def _index_state_machine(lines):
             if stripped.startswith("paths:") and indent == 0:
                 state = "IN_PATHS"
             continue
+
+        # Consume block scalar continuation lines
+        if collecting_block and stripped and indent > prop_indent:
+            if collecting_block == "summary" and not current_summary:
+                current_summary = stripped  # preserve full first line
+            elif collecting_block == "description" and not current_desc:
+                current_desc = stripped
+            continue
+        else:
+            collecting_block = None
 
         if state == "IN_PATHS" or state == "IN_PATH" or state == "IN_METHOD":
             if stripped.startswith("#") or not stripped:
@@ -236,6 +249,7 @@ def _index_state_machine(lines):
                     _flush_entry(entries, current_path, current_method,
                                  current_summary, current_opid, current_desc,
                                  line_ranges)
+                    current_method = None
                 break
 
             # Path line
@@ -272,13 +286,19 @@ def _index_state_machine(lines):
             # Property lines inside a method
             if state == "IN_METHOD" and prop_indent and indent == prop_indent:
                 if stripped.startswith("summary:"):
-                    current_summary = strip_yaml_quotes(stripped.split(":", 1)[1].strip())
+                    val = stripped.split(":", 1)[1].strip()
+                    if val in ("|", "|-", ">", ">-"):
+                        collecting_block = "summary"
+                    else:
+                        current_summary = strip_yaml_quotes(val)
                 elif stripped.startswith("operationId:"):
                     current_opid = strip_yaml_quotes(stripped.split(":", 1)[1].strip())
                 elif stripped.startswith("description:"):
                     val = stripped.split(":", 1)[1].strip()
-                    if val:
-                        current_desc = strip_yaml_quotes(val).split(".")[0].split("\n")[0]
+                    if val in ("|", "|-", ">", ">-"):
+                        collecting_block = "description"
+                    elif val:
+                        current_desc = strip_yaml_quotes(val)
 
     # Flush last method
     if current_method:
@@ -286,7 +306,7 @@ def _index_state_machine(lines):
                      current_summary, current_opid, current_desc,
                      line_ranges)
 
-    entries.sort(key=lambda e: e[3])
+    entries.sort(key=lambda e: (e[1], e[0]))
     return entries
 
 
