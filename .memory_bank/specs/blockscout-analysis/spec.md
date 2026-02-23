@@ -48,6 +48,8 @@ There are separate specifications that define preparation to produce API referen
 
 The specification is [`blockscout-api-composition-spec.md`](blockscout-api-composition-spec.md). It describes the pipeline to produce comprehensive API reference files in `references/blockscout-api/` and the index file in `references/blockscout-api-index.md`. The agent consults these when it needs to discover endpoints for use with `direct_api_call`.
 
+The index file (`references/blockscout-api-index.md`) must include a **brief structural note at the top** explaining the two-step discovery process: find the endpoint in this index, then read the corresponding `references/blockscout-api/{filename}.md` file for full parameter details. This ensures the agent understands the navigation pattern immediately upon loading the index.
+
 ### Chainscout
 
 The specification is [`chainscout-api-spec.md`](chainscout-api-spec.md). It describes the preparation to produce the API reference file in `references/chainscout-api.md`. The agent consults it when it needs to discover the Blockscout instance URL for a specific chain.
@@ -61,8 +63,12 @@ The skill must use a hub-and-spoke pattern:
 - `SKILL.md` — concise entry point with decision table (execution strategy) and quick references
 - Supporting docs in `references/` — loaded on demand by the agent, one per topic
 - API reference files in `references/` — produced during the [skill preparation phase](#skill-preparation-phase)
-- Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in a **separate directory** (e.g., `artifacts/`), not in `scripts/`
+- Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in the `artifacts/` directory
 - **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts in such a manner that (a) **before** writing the script, the agent ensures all dependencies are resolved; (b) the agent **prefers alternatives** from existing libraries, packages, or CLI tools already on the host machine rather than suggesting the user install new dependencies; (c) the agent suggests the user install dependencies **only if** there is no suitable alternative available on the host.
+
+### SKILL.md line budget
+
+Per the [Agent Skills best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), the `SKILL.md` body (excluding frontmatter) should be kept **under 500 lines**. The modular hub-and-spoke structure supports this: if during skill preparation any content would push `SKILL.md` beyond this budget, that content must be moved to a separate file in `references/` and referenced from `SKILL.md`. The exact split is determined during the skill preparation process based on the content produced.
 
 ### README in skill directory
 
@@ -74,9 +80,34 @@ The skill must include a **README file in the skill directory** (e.g., `README.m
 
 The README must not duplicate long reference material that belongs in `SKILL.md` or `references/`; it should orient the reader and point to those resources where appropriate.
 
-### Version in SKILL.md
+### SKILL.md frontmatter
 
-The skill must declare its version in the `SKILL.md` file (e.g., at the top or in a dedicated section) so that updates can be identified easily.
+The `SKILL.md` file must include YAML frontmatter as required by the [Agent Skills specification](https://agentskills.io/specification.md):
+
+```yaml
+---
+name: blockscout-analysis
+description: >-
+  Analyze blockchain activity and build tools, scripts, and applications that
+  query on-chain data through the Blockscout MCP Server (native MCP and REST
+  API). Covers address, token, transaction, contract, and NFT analysis across
+  EVM chains. Use when the user asks about wallet balances, token transfers,
+  contract interactions, on-chain metrics, or needs to build software that
+  retrieves blockchain data via Blockscout.
+license: MIT
+metadata:
+  author: blockscout.com
+  version: "<current version>"
+  github: https://www.github.com/blockscout/agent-skills
+  support: https://discord.gg/blockscout
+---
+```
+
+- **`name`**: Must match the skill directory name (`blockscout-analysis`).
+- **`description`**: Must describe both what the skill does and when to use it, with specific keywords that help agents identify relevant tasks.
+- **`license`**: MIT.
+- **`metadata.version`**: Skill version; must be updated on each release so that changes can be identified easily.
+- **`metadata.author`**, **`metadata.github`**, **`metadata.support`**: Publisher and support information.
 
 ### MCP access strategy
 
@@ -140,11 +171,12 @@ Blockscout infrastructure may expose native coin or token prices in some respons
 
 ### Response transformation
 
-Scripts querying the MCP REST API (especially `direct_api_call`, which returns raw Blockscout API responses) must:
+Raw Blockscout API responses (especially those returned by `direct_api_call`) can be very heavy from a token-consumption perspective. Scripts querying the MCP REST API must transform responses before passing output to the LLM:
 
-- Extract only fields relevant to the user's question
-- Flatten nested structures where possible
-- Format output for token-efficient LLM consumption
+- **Extract only fields relevant to the user's question** — omit unneeded fields from response objects
+- **Filter list elements** — when the response contains lists, retain only the elements that match the user's criteria rather than passing entire arrays
+- **Handle heavy data blobs intelligently** — large fields such as transaction calldata, NFT metadata, log contents, and encoded byte arrays should be filtered, decoded, summarized, or flagged for matching rather than included verbatim
+- **Flatten nested structures where possible** — reduce object nesting depth to simplify downstream processing
 
 ### Secure handling of API response data (prompt injection awareness)
 
@@ -162,7 +194,7 @@ The skill must describe a workflow that guides the agent through starting and co
 
 - Determine which blockchain the user is asking about from the context of the user's query.
 - Default to chain ID `1` (Ethereum Mainnet) when the query does not specify a chain or clearly refers to Ethereum.
-- Use the `get_chains_list` MCP tool to validate the chain ID and discover the corresponding Blockscout instance URL when needed.
+- Use the `get_chains_list` MCP tool to validate the chain ID. When the Blockscout instance URL is needed (e.g., for constructing explorer links), use Chainscout to resolve the chain ID to its Blockscout instance URL (see [Chainscout](#chainscout)).
 
 ### 2. Choose the execution strategy
 
@@ -172,14 +204,19 @@ The skill must describe a workflow that guides the agent through starting and co
 
 ### 3. Ensure tooling availability
 
-- If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install or enable it automatically (if the agent has the capability to do so in its host environment). When the MCP server is not configured, the agent should use `GET https://mcp.blockscout.com/v1/tools` to obtain tool names, descriptions, and input parameters.
+- If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install or enable it automatically (if the agent has the capability to do so in its host environment).
+- **Fallback to REST API**: When the native MCP server cannot be made available, the agent must fall back to the MCP REST API (`https://mcp.blockscout.com/v1/`) for all data access. In this case, the agent should use `GET https://mcp.blockscout.com/v1/tools` to obtain tool names, descriptions, and input parameters, and then call tools via their REST endpoints.
 
 ### 4. Discover endpoints
 
 For each data need identified in the task, determine whether a dedicated MCP tool can fulfill it. If not, discover the appropriate `direct_api_call` endpoint:
 
 1. **Check dedicated MCP tools**: Review the available MCP tools. If a dedicated tool answers the data need, use it (per [tool selection priority](#tool-selection-priority)).
-2. **Consult `references/blockscout-api-index.md` API index file**: When the task requires endpoints beyond what dedicated MCP tools cover, read the appropriate `references/blockscout-api-index.md` API index file from the skill documentation to find the endpoint path, then consult the appropriate `references/blockscout-api/{filename}.md` file to find the parameters for use with `direct_api_call`.
+2. **Discover `direct_api_call` endpoints** (two-step process): When the task requires endpoints beyond what dedicated MCP tools cover, the agent must follow this sequence:
+   1. **Read the index file** (`references/blockscout-api-index.md`): Locate the endpoint by name or category to identify which API reference file contains its full documentation.
+   2. **Read the corresponding reference file** (`references/blockscout-api/{filename}.md`): Inspect the endpoint's parameters, types, and descriptions for use with `direct_api_call`.
+
+   The agent must not skip the index step—it is the only reliable way to find which reference file documents a given endpoint.
 
 ### 5. Plan the actions
 
