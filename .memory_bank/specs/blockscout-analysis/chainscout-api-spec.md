@@ -50,7 +50,7 @@ Base URL: `https://chains.blockscout.com/api`
 
 ### Chain Registry
 
-#### /chains/{chain_id}
+#### GET /chains/{chain_id}
 
 Returns the descriptor for the specified chain, including the Blockscout explorer URL in the `explorers` array. Use `explorers[].url` where `explorers[].hostedBy` is `"blockscout"` to obtain the Blockscout instance URL.
 
