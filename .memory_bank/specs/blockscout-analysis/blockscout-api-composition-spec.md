@@ -21,6 +21,9 @@ The API files are produced through a sequential pipeline. Each step is defined i
 4. **Patch with JSON-RPC endpoints**
    [`rpc-api-patch-spec.md`](rpc-api-patch-spec.md) — approach to extend the API files with two endpoints provided by Blockscout instances but not defined in the swagger files.
 
+5. **Remove MCP tool duplicates**
+   [`mcp-duplicate-removal-spec.md`](mcp-duplicate-removal-spec.md) — approach to remove API endpoints that completely duplicate dedicated MCP Server tools, enforcing the tool selection priority principle.
+
 ## Output Format
 
 All produced API files follow the format defined in [`api-format-spec.md`](api-format-spec.md).

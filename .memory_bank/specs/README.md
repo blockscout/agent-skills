@@ -12,6 +12,7 @@ specs/
     ├── api-format-spec.md                  # API reference file format spec
     ├── blockscout-api-composition-spec.md  # Pipeline to produce Blockscout API reference files 
     ├── chainscout-api-spec.md              # Specification for Chainscout API reference file
+    ├── mcp-duplicate-removal-spec.md       # Specification for removing MCP tool duplicate endpoints from API reference files
     ├── mcp-unlock-patch-spec.md            # Specification for patching Blockscout API reference files from unlock_blockchain_analysis MCP tool
     ├── rpc-api-patch-spec.md               # Specification for patching Blockscout API reference files with JSON-RPC endpoints
     ├── swagger-main-indexer-spec.md        # Specification for indexing the main Blockscout swagger
