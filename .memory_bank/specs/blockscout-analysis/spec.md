@@ -13,6 +13,7 @@ Create a modular AI agent skill for two equally important goals: (1) **blockchai
 - **Multichain**: The server is multichain; almost all tools accept a `chain_id` parameter to target a specific chain (use `get_chains_list` to discover supported chains).
 - **16 tools**: unlock_blockchain_analysis, get_chains_list, get_address_info, get_address_by_ens_name, get_tokens_by_address, nft_tokens_by_address, get_transactions_by_address, get_token_transfers_by_address, get_block_info, get_block_number, get_transaction_info, get_contract_abi, inspect_contract_code, read_contract, lookup_token_by_symbol, direct_api_call
 - **Responses**: LLM-friendly (pre-filtered, enriched), except for `direct_api_call`, which proxies raw Blockscout API responses.
+- **`direct_api_call` response size limit**: The MCP server enforces a default response size limit (100,000 characters) on `direct_api_call` responses. When exceeded, a 413 error is returned. Native MCP calls strictly enforce this limit. REST API callers can bypass it by including the `X-Blockscout-Allow-Large-Response: true` HTTP header — but scripts using this bypass must still apply [response transformation](#response-transformation) before passing output to the LLM.
 - **Advantage**: Simplified cursor-based pagination more suitable for LLMs and scripts, and guidance in the responses to suggest the next step.
 
 #### Mandatory `unlock_blockchain_analysis` (MCP prerequisite)
@@ -48,13 +49,28 @@ There are separate specifications that define preparation to produce API referen
 
 The specification is [`blockscout-api-composition-spec.md`](blockscout-api-composition-spec.md). It describes the pipeline to produce comprehensive API reference files in `references/blockscout-api/` and the index file in `references/blockscout-api-index.md`. The agent consults these when it needs to discover endpoints for use with `direct_api_call`.
 
-The index file (`references/blockscout-api-index.md`) must include a **brief structural note at the top** explaining the two-step discovery process: find the endpoint in this index, then read the corresponding `references/blockscout-api/{filename}.md` file for full parameter details. This ensures the agent understands the navigation pattern immediately upon loading the index.
-
 ### Chainscout
 
 The specification is [`chainscout-api-spec.md`](chainscout-api-spec.md). It describes the preparation to produce the API reference file in `references/chainscout-api.md`. The agent consults it when it needs to discover the Blockscout instance URL for a specific chain.
 
 ## Design Requirements
+
+### Conformance to Agent Skills standard
+
+The skill must conform to the [Agent Skills specification](https://agentskills.io/specification.md). The specification defines the directory structure, `SKILL.md` format (frontmatter and body), optional directories (`scripts/`, `references/`, `assets/`), file referencing conventions, and — critically — the **progressive disclosure** model that governs how agents load skill content:
+
+1. **Metadata** (~100 tokens): `name` and `description` are loaded at startup for all skills.
+2. **Instructions** (< 5000 tokens recommended): The full `SKILL.md` body is loaded when the skill is activated.
+3. **Resources** (as needed): Files in `references/`, `scripts/`, and `assets/` are loaded only when required — with no guarantee they will be loaded at all.
+
+### SKILL.md self-sufficiency
+
+Because the progressive disclosure model guarantees that only `SKILL.md` is loaded at activation — while reference files may or may not be loaded during execution — `SKILL.md` must be **self-sufficient for correct agent behavior**:
+
+- All instructions the agent needs to follow the right process — workflow phases, decision framework, security rules, disclaimers, response handling rules — must live in `SKILL.md` itself.
+- An agent that reads only `SKILL.md` and never opens a reference file must still behave correctly.
+- Reference files in `references/` are for **lookup data** the agent consults during task execution (e.g., API endpoint parameters, chain registry details). `SKILL.md` must give the agent a clear reason and trigger to read each reference file, so the agent understands why and when to load it.
+- Content must only be moved from `SKILL.md` to `references/` when it is lookup or reference data by nature — not to meet the line budget by offloading behavioral instructions.
 
 ### Modular structure
 
@@ -68,7 +84,7 @@ The skill must use a hub-and-spoke pattern:
 
 ### SKILL.md line budget
 
-Per the [Agent Skills best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), the `SKILL.md` body (excluding frontmatter) should be kept **under 500 lines**. The modular hub-and-spoke structure supports this: if during skill preparation any content would push `SKILL.md` beyond this budget, that content must be moved to a separate file in `references/` and referenced from `SKILL.md`. The exact split is determined during the skill preparation process based on the content produced.
+Per the [Agent Skills best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), the `SKILL.md` body (excluding frontmatter) should be kept **under 500 lines**. The modular hub-and-spoke structure supports this: if during skill preparation any content would push `SKILL.md` beyond this budget, **lookup and reference data** (not behavioral instructions) may be moved to a separate file in `references/` and referenced from `SKILL.md`, subject to the [self-sufficiency rule](#skillmd-self-sufficiency). The exact split is determined during the skill preparation process based on the content produced.
 
 ### README in skill directory
 
@@ -104,7 +120,7 @@ metadata:
 ```
 
 - **`name`**: Must match the skill directory name (`blockscout-analysis`).
-- **`description`**: Must describe both what the skill does and when to use it, with specific keywords that help agents identify relevant tasks.
+- **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill.
 - **`license`**: MIT.
 - **`metadata.version`**: Skill version; must be updated on each release so that changes can be identified easily.
 - **`metadata.author`**, **`metadata.github`**, **`metadata.support`**: Publisher and support information.
@@ -177,6 +193,7 @@ Raw Blockscout API responses (especially those returned by `direct_api_call`) ca
 - **Filter list elements** — when the response contains lists, retain only the elements that match the user's criteria rather than passing entire arrays
 - **Handle heavy data blobs intelligently** — large fields such as transaction calldata, NFT metadata, log contents, and encoded byte arrays should be filtered, decoded, summarized, or flagged for matching rather than included verbatim
 - **Flatten nested structures where possible** — reduce object nesting depth to simplify downstream processing
+- **Large response bypass**: When scripts use the `X-Blockscout-Allow-Large-Response: true` header to bypass the `direct_api_call` size limit, response transformation is especially critical — the full untruncated response may be very large and must be filtered, extracted, and flattened before any part reaches the LLM.
 
 ### Secure handling of API response data (prompt injection awareness)
 
