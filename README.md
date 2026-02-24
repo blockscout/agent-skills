@@ -8,7 +8,7 @@ Each skill is a self-contained directory of structured instructions and helper s
 
 | Skill | Description |
 |-------|-------------|
-| [blockscout-analysis](blockscout-analysis/) | On-chain data retrieval and analysis across 270+ EVM chains via MCP server, PRO API, and supporting services (BENS, Metadata, Chainscout, Stats) |
+| [blockscout-analysis](blockscout-analysis/) | Modular skill for blockchain data analysis and scripting using the Blockscout MCP Server. Guides agents to use native tools, REST API scripts, or hybrid flows for multi-chain EVM data. |
 
 ## Setup
 
