@@ -131,7 +131,6 @@ Blockscout may expose native coin or token prices in some responses (e.g., token
 
 When the execution strategy calls for a script, the agent writes and runs it at runtime.
 
-- **Storage**: All ad-hoc scripts must be stored in the `artifacts/` directory.
 - **Dependencies**: Before writing the script, ensure all dependencies are resolved. Prefer libraries, packages, or CLI tools already available on the host machine. Suggest installing new dependencies only if no suitable alternative exists.
 - **MCP REST API access**: Scripts call the MCP REST API via HTTP GET at `https://mcp.blockscout.com/v1/{tool_name}?param1=value1&param2=value2`. Pagination uses the `cursor` query parameter (see [MCP pagination](#mcp-pagination)).
 - **Response handling**: Scripts must apply [response transformation](#response-transformation) rules — extract relevant fields, filter, flatten, and format output for token-efficient LLM consumption.

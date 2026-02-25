@@ -80,7 +80,6 @@ The skill must use a hub-and-spoke pattern:
 - `SKILL.md` — concise entry point with decision table (execution strategy) and quick references
 - Supporting docs in `references/` — loaded on demand by the agent, one per topic
 - API reference files in `references/` — produced during the [skill preparation phase](#skill-preparation-phase)
-- Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in the `artifacts/` directory
 - **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts in such a manner that (a) **before** writing the script, the agent ensures all dependencies are resolved; (b) the agent **prefers alternatives** from existing libraries, packages, or CLI tools already on the host machine rather than suggesting the user install new dependencies; (c) the agent suggests the user install dependencies **only if** there is no suitable alternative available on the host.
 
 ### SKILL.md line budget
@@ -254,7 +253,7 @@ For each data need identified in the task, determine whether a dedicated MCP too
 ### 6. Execute
 
 - Carry out the plan: make tool calls, write and run ad-hoc scripts, or both.
-- Ad-hoc scripts must follow the requirements from [Modular structure](#modular-structure): stored in `artifacts/`, dependencies resolved before writing the script, and preference given to already-available tools and libraries.
+- Ad-hoc scripts must follow the requirements from [Modular structure](#modular-structure): dependencies resolved before writing the script, and preference given to already-available tools and libraries.
 - Scripts that call the MCP REST API (especially `direct_api_call`) must apply [response transformation](#response-transformation)—extract relevant fields, flatten nested structures, format output for token-efficient LLM consumption.
 - After execution, the agent should interpret results in the context of the user's original question rather than simply presenting raw output.
 
