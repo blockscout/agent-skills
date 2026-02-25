@@ -105,13 +105,16 @@ The `SKILL.md` file must include YAML frontmatter as required by the [Agent Skil
 ---
 name: blockscout-analysis
 description: >-
-  Analyze blockchain activity and build tools, scripts, and applications that
-  query on-chain data through the Blockscout API and MCP Server (native MCP
-  and REST API). Covers address, token, transaction, contract, and NFT
-  analysis across EVM chains. Use when the user asks about wallet balances,
-  token transfers, contract interactions, on-chain metrics, wants to use the
-  Blockscout API, or needs to build software that retrieves blockchain data
-  via Blockscout.
+  MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls
+  or writing any blockchain data scripts, even when the Blockscout MCP server
+  is already configured. Provides architectural rules, execution-strategy
+  decisions, MCP REST API conventions for scripts, endpoint reference files,
+  response transformation requirements, and output conventions that are not
+  available from MCP tool descriptions alone.
+  Use when the user asks about on-chain data, blockchain analysis, wallet
+  balances, token transfers, contract interactions, on-chain metrics, wants
+  to use the Blockscout API, or needs to build software that retrieves
+  blockchain data via Blockscout. Covers all EVM chains.
 license: MIT
 metadata:
   author: blockscout.com
@@ -122,7 +125,7 @@ metadata:
 ```
 
 - **`name`**: Must match the skill directory name (`blockscout-analysis`).
-- **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill.
+- **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill. The description must also include a mandatory invocation directive instructing the agent to invoke the skill BEFORE making any Blockscout MCP tool calls or writing blockchain data scripts, even when the MCP server is already configured, and must explain that the skill provides architectural rules, execution-strategy decisions, and conventions not available from MCP tool descriptions alone.
 - **`license`**: MIT.
 - **`metadata.version`**: Skill version; must be updated on each release so that changes can be identified easily.
 - **`metadata.author`**, **`metadata.github`**, **`metadata.support`**: Publisher and support information.
