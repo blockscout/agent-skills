@@ -14,7 +14,7 @@ description: >-
 license: MIT
 metadata:
   author: blockscout.com
-  version: "0.1.0"
+  version: "0.2.0"
   github: https://www.github.com/blockscout/agent-skills
   support: https://discord.gg/blockscout
 ---
