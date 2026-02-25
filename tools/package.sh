@@ -10,8 +10,12 @@ parent="$(dirname "$dir")"
 
 [[ -f "$dir/SKILL.md" ]] || { echo "Error: '$dir/SKILL.md' not found" >&2; exit 1; }
 
+# Extract version from SKILL.md frontmatter (metadata.version)
+version="$(sed -n '/^metadata:/,/^---/{s/^  version: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/p;}' "$dir/SKILL.md")"
+[[ -n "$version" ]] || { echo "Error: no metadata.version in '$dir/SKILL.md'" >&2; exit 1; }
+
 # Output zip in the original working directory
-output="$(pwd)/${name}.zip"
+output="$(pwd)/${name}-${version}.zip"
 rm -f "$output"
 
 # cd to parent so git ls-files produces clean <name>/... paths
