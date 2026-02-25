@@ -12,7 +12,7 @@ Each skill is a self-contained directory of structured instructions and helper s
 
 ## Setup
 
-Each skill is a directory with a `SKILL.md` entry point and supporting docs/scripts. Integration depends on your agent: e.g. for **Claude Code**, symlink the skill directory into `.claude/skills/`
+Each skill is a directory with a `SKILL.md` entry point and supporting docs/scripts. Integration depends on your agent platform.
 
 See each skill's README for required environment variables and configuration.
 
