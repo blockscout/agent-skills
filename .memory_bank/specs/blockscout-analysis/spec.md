@@ -105,11 +105,12 @@ The `SKILL.md` file must include YAML frontmatter as required by the [Agent Skil
 name: blockscout-analysis
 description: >-
   Analyze blockchain activity and build tools, scripts, and applications that
-  query on-chain data through the Blockscout MCP Server (native MCP and REST
-  API). Covers address, token, transaction, contract, and NFT analysis across
-  EVM chains. Use when the user asks about wallet balances, token transfers,
-  contract interactions, on-chain metrics, or needs to build software that
-  retrieves blockchain data via Blockscout.
+  query on-chain data through the Blockscout API and MCP Server (native MCP
+  and REST API). Covers address, token, transaction, contract, and NFT
+  analysis across EVM chains. Use when the user asks about wallet balances,
+  token transfers, contract interactions, on-chain metrics, wants to use the
+  Blockscout API, or needs to build software that retrieves blockchain data
+  via Blockscout.
 license: MIT
 metadata:
   author: blockscout.com
@@ -174,7 +175,7 @@ The skill's decision table in `SKILL.md` must present the execution strategy so 
 
 #### Tool selection priority
 
-When a data need can be fulfilled by either a dedicated MCP tool or `direct_api_call`, the agent must prefer the dedicated MCP tool (enriched, LLM-friendly responses). Fall back to `direct_api_call` only when the needed endpoint has no dedicated MCP tool or when the dedicated tool's response lacks a required field.
+When a data need can be fulfilled by either a dedicated MCP tool or `direct_api_call`, the agent must prefer the dedicated MCP tool (enriched, LLM-friendly responses). Choose `direct_api_call` instead when: (a) no dedicated tool covers the needed endpoint, or (b) the dedicated tool is known — from its description or schema — not to return a field required for the task. This selection is made upfront during Phase 4 (endpoint discovery), not after calling a dedicated tool and discovering a gap at runtime.
 
 **No redundant calls**: Once a tool or endpoint is selected for a data need, the agent must not call alternative tools for the same data.
 

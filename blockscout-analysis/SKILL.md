@@ -2,11 +2,12 @@
 name: blockscout-analysis
 description: >-
   Analyze blockchain activity and build tools, scripts, and applications that
-  query on-chain data through the Blockscout MCP Server (native MCP and REST
-  API). Covers address, token, transaction, contract, and NFT analysis across
-  EVM chains. Use when the user asks about wallet balances, token transfers,
-  contract interactions, on-chain metrics, or needs to build software that
-  retrieves blockchain data via Blockscout.
+  query on-chain data through the Blockscout API and MCP Server (native MCP
+  and REST API). Covers address, token, transaction, contract, and NFT
+  analysis across EVM chains. Use when the user asks about wallet balances,
+  token transfers, contract interactions, on-chain metrics, wants to use the
+  Blockscout API, or needs to build software that retrieves blockchain data
+  via Blockscout.
 license: MIT
 metadata:
   author: blockscout.com
@@ -69,7 +70,7 @@ All data access goes through the Blockscout MCP Server. Prefer sources in this o
 2. **`direct_api_call`** — for Blockscout API endpoints not covered by dedicated tools. Consult `references/blockscout-api-index.md` to discover available endpoints.
 3. **Chainscout** — only for resolving a chain ID to its Blockscout instance URL.
 
-When a data need can be fulfilled by either a dedicated MCP tool or `direct_api_call`, always prefer the dedicated tool. Fall back to `direct_api_call` only when no dedicated tool covers the endpoint or the dedicated tool's response lacks a required field.
+When a data need can be fulfilled by either a dedicated MCP tool or `direct_api_call`, always prefer the dedicated tool. Choose `direct_api_call` instead when no dedicated tool covers the endpoint, or when the dedicated tool is known — from its description or schema — not to return a field required for the task. Make this choice upfront; do not call a dedicated tool and then fall back to `direct_api_call` for the same data.
 
 **No redundant calls**: Once a tool or endpoint is selected for a data need, do not call alternative tools for the same data.
 
