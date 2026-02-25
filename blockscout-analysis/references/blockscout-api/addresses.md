@@ -33,18 +33,6 @@ Should be used together with `sort` parameter.
   | `items_count` | `integer` | No | Number of items returned per page |
   | `transactions_count` | `string` | No | Transactions count for paging |
 
-#### GET /api/v2/addresses/{address_hash_param}
-
-Retrieves detailed information for a specific address, including balance, transaction count, and metadata.
-
-- **Parameters**
-
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-
 #### GET /api/v2/addresses/{address_hash_param}/blocks-validated
 
 Retrieves blocks that were validated (mined) by a specific address. Useful for tracking validator/miner performance.

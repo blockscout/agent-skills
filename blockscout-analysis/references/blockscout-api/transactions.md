@@ -65,18 +65,6 @@ Retrieves transactions in the authenticated user's watchlist.
   | `index` | `integer` | No | Transaction index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
-#### GET /api/v2/transactions/{transaction_hash_param}
-
-Retrieves detailed information for a specific transaction identified by its hash.
-
-- **Parameters**
-
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `transaction_hash_param` | `string` | Yes | Transaction hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-
 #### GET /api/v2/transactions/{transaction_hash_param}/external-transactions
 
 Retrieves external transactions that are linked to the specified transaction (e.g., Solana transactions in `neon` chain type).

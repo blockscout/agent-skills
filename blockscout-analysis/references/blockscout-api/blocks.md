@@ -21,18 +21,6 @@ If omitted, default value "block" is used.
   | `block_number` | `integer` | No | Block number for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
-#### GET /api/v2/blocks/{block_hash_or_number_param}
-
-Retrieves detailed information for a specific block, including transactions, internal transactions, and metadata.
-
-- **Parameters**
-
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `block_hash_or_number_param` | `string` | Yes | Block hash or number in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-
 #### GET /api/v2/blocks/{block_hash_or_number_param}/internal-transactions
 
 Retrieves internal transactions included in a specific block with optional filtering by type and call type.

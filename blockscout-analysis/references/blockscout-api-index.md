@@ -8,7 +8,6 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 ## [Blocks](blockscout-api/blocks.md)
 
 - `/api/v2/blocks`: Retrieves a paginated list of blocks with optional filtering by block type.
-- `/api/v2/blocks/{block_hash_or_number_param}`: Retrieves detailed information for a specific block, including transactions, internal transactions, and metadata.
 - `/api/v2/blocks/{block_hash_or_number_param}/internal-transactions`: Retrieves internal transactions included in a specific block with optional filtering by type and call type.
 - `/api/v2/blocks/{block_hash_or_number_param}/transactions`: Retrieves transactions included in a specific block, ordered by transaction index.
 - `/api/v2/blocks/{block_hash_or_number_param}/withdrawals`: Retrieves withdrawals processed in a specific block (typically for proof-of-stake networks).
@@ -21,7 +20,6 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 - `/api/v2/transactions`: Retrieves a paginated list of transactions with optional filtering by status, type, and method.
 - `/api/v2/transactions/stats`: Retrieves statistics for transactions, including counts and fee summaries for the last 24 hours.
 - `/api/v2/transactions/watchlist`: Retrieves transactions in the authenticated user's watchlist.
-- `/api/v2/transactions/{transaction_hash_param}`: Retrieves detailed information for a specific transaction identified by its hash.
 - `/api/v2/transactions/{transaction_hash_param}/external-transactions`: Retrieves external transactions that are linked to the specified transaction (e.g., Solana transactions in `neon` chain type).
 - `/api/v2/transactions/{transaction_hash_param}/internal-transactions`: Retrieves internal transactions generated during the execution of a specific transaction. Useful for analyzing contract interactions and debugging failed transactions.
 - `/api/v2/transactions/{transaction_hash_param}/logs`: Retrieves event logs emitted during the execution of a specific transaction. Logs contain information about contract events and state changes.
@@ -34,7 +32,6 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 ## [Addresses](blockscout-api/addresses.md)
 
 - `/api/v2/addresses`: Retrieves a paginated list of addresses holding the native coin, sorted by balance.
-- `/api/v2/addresses/{address_hash_param}`: Retrieves detailed information for a specific address, including balance, transaction count, and metadata.
 - `/api/v2/addresses/{address_hash_param}/blocks-validated`: Retrieves blocks that were validated (mined) by a specific address. Useful for tracking validator/miner performance.
 - `/api/v2/addresses/{address_hash_param}/coin-balance-history`: Retrieves historical native coin balance changes for a specific address, tracking how an address's balance has changed over time.
 - `/api/v2/addresses/{address_hash_param}/coin-balance-history-by-day`: Retrieves daily snapshots of native coin balance for a specific address. Useful for generating balance-over-time charts.
