@@ -132,6 +132,7 @@ metadata:
 ### MCP access strategy
 
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) via HTTP
+- **User-Agent requirement**: Every HTTP request to the MCP REST API must include the header `User-Agent: Blockscout-SkillGuidedScript/<skill-version>` (where `<skill-version>` is the value from `SKILL.md` frontmatter `metadata.version`). The CDN in front of the MCP REST API rejects requests without a recognized User-Agent with HTTP 403. Because standard-library HTTP clients (e.g., Python `urllib`) send a generic User-Agent that is blocked, the skill must explicitly instruct the agent to set this header in every script. This avoids the recurring failure pattern where the agent writes a script, gets a 403, and then installs a third-party HTTP library to work around it.
 - For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the agent to ensure the native MCP server is available (see [MCP server availability](#mcp-server-availability) below)
 - The choice between script-based HTTP calls and direct MCP tool calls is governed by the execution strategy (see [Execution strategy](#execution-strategy) below)
 
