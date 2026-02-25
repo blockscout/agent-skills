@@ -31,6 +31,8 @@ The server is the sole runtime data source. It is multichain — almost all tool
 | Native MCP | `https://mcp.blockscout.com/mcp` | Direct tool calls from the agent |
 | REST API | `https://mcp.blockscout.com/v1/{tool_name}?params` | HTTP GET calls from scripts |
 
+**Response format equivalence**: Native MCP tool calls and REST API calls to the same tool return identical JSON response structures. When writing scripts targeting the REST API, use native MCP tool calls to probe and validate the expected response shape.
+
 **Available tools** (16): `unlock_blockchain_analysis`, `get_chains_list`, `get_address_info`, `get_address_by_ens_name`, `get_tokens_by_address`, `nft_tokens_by_address`, `get_transactions_by_address`, `get_token_transfers_by_address`, `get_block_info`, `get_block_number`, `get_transaction_info`, `get_contract_abi`, `inspect_contract_code`, `read_contract`, `lookup_token_by_symbol`, `direct_api_call`.
 
 Dedicated MCP tools return LLM-friendly, enriched responses (pre-filtered, with guidance for next steps). The exception is `direct_api_call`, which proxies raw Blockscout API responses without optimization or filtering. `direct_api_call` enforces a 100,000-character response size limit (413 error when exceeded). Native MCP calls strictly enforce this limit. REST API callers can bypass it with the `X-Blockscout-Allow-Large-Response: true` header — but scripts using this bypass must still apply [response transformation](#response-transformation).
@@ -87,6 +89,8 @@ Choose the execution method based on task complexity, determinism, and whether s
 | Large data volume with known filtering criteria | **Script with `direct_api_call`** | Process many pages with programmatic filters. Use `direct_api_call` via MCP REST API for paginated endpoints. |
 
 **Combination patterns**: Real-world queries often combine strategies. E.g., direct tool calls to resolve an ENS name, then a script to iterate chains and normalize balances, with the LLM interpreting which tokens are stablecoins.
+
+**Probe-then-script**: When the execution strategy is "Script" but the agent needs to understand response structures before writing the script, call the relevant MCP tools natively with representative parameters first. Use the observed response structure to write the script targeting the REST API. Do not fall back to third-party data sources (e.g., direct RPC endpoints, third-party libraries) when the MCP REST API covers the data need.
 
 ## Response Transformation
 
@@ -150,6 +154,7 @@ Follow these phases in order when conducting a blockchain analysis task. The wor
 
 - If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not, either provide the user with instructions to install or enable it, or install/enable it automatically if the agent has that capability.
 - **Fallback**: When the native MCP server cannot be made available, fall back to the MCP REST API (`https://mcp.blockscout.com/v1/`) for all data access. Use `GET https://mcp.blockscout.com/v1/tools` to discover tool names, descriptions, and input parameters, then call tools via their REST endpoints.
+- **Scripts target the user's environment**: If the agent's runtime cannot reach the REST API but native MCP tools are available, still write scripts targeting the REST API — the script runs in the user's environment. Use native MCP tool calls to validate response formats during development (see response format equivalence above).
 
 ### Phase 4 — Discover endpoints
 
