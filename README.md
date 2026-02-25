@@ -16,6 +16,16 @@ Each skill is a directory with a `SKILL.md` entry point and supporting docs/scri
 
 See each skill's README for required environment variables and configuration.
 
+## Packaging
+
+To create a distributable zip of a skill:
+
+```sh
+bash tools/package.sh <skill-directory>
+```
+
+This produces `<skill-directory>.zip` containing all tracked files except `.gitignore` and `README.md`.
+
 ## License
 
 [MIT](LICENSE)

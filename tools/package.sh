@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+input="${1:?Usage: $0 <skill-directory>}"
+
+# Resolve to absolute path, extract name and parent
+dir="$(cd "$input" 2>/dev/null && pwd)" || { echo "Error: '$input' is not a directory" >&2; exit 1; }
+name="$(basename "$dir")"
+parent="$(dirname "$dir")"
+
+[[ -f "$dir/SKILL.md" ]] || { echo "Error: '$dir/SKILL.md' not found" >&2; exit 1; }
+
+# Output zip in the original working directory
+output="$(pwd)/${name}.zip"
+rm -f "$output"
+
+# cd to parent so git ls-files produces clean <name>/... paths
+cd "$parent"
+
+git ls-files "$name" \
+  | grep -v -E "^${name}/(\.gitignore|README\.md)$" \
+  | zip "$output" -@
+
+echo "Created $output"
