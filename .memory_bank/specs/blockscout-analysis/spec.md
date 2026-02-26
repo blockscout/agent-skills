@@ -111,31 +111,20 @@ The `SKILL.md` file must include YAML frontmatter as required by the [Agent Skil
 ```yaml
 ---
 name: blockscout-analysis
-description: >-
-  MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls
-  or writing any blockchain data scripts, even when the Blockscout MCP server
-  is already configured. Provides architectural rules, execution-strategy
-  decisions, MCP REST API conventions for scripts, endpoint reference files,
-  response transformation requirements, and output conventions that are not
-  available from MCP tool descriptions alone.
-  Use when the user asks about on-chain data, blockchain analysis, wallet
-  balances, token transfers, contract interactions, on-chain metrics, wants
-  to use the Blockscout API, or needs to build software that retrieves
-  blockchain data via Blockscout. Covers all EVM chains.
+description: "MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls or writing any blockchain data scripts, even when the Blockscout MCP server is already configured. Provides architectural rules, execution-strategy decisions, MCP REST API conventions for scripts, endpoint reference files, response transformation requirements, and output conventions that are not available from MCP tool descriptions alone. Use when the user asks about on-chain data, blockchain analysis, wallet balances, token transfers, contract interactions, on-chain metrics, wants to use the Blockscout API, or needs to build software that retrieves blockchain data via Blockscout. Covers all EVM chains."
 license: MIT
-metadata:
-  author: blockscout.com
-  version: "<current version>"
-  github: https://www.github.com/blockscout/agent-skills
-  support: https://discord.gg/blockscout
+metadata: {"author":"blockscout.com","version":"<current version>","github":"https://www.github.com/blockscout/agent-skills","support":"https://discord.gg/blockscout"}
 ---
 ```
 
 - **`name`**: Must match the skill directory name (`blockscout-analysis`).
 - **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill. The description must also include a mandatory invocation directive instructing the agent to invoke the skill BEFORE making any Blockscout MCP tool calls or writing blockchain data scripts, even when the MCP server is already configured, and must explain that the skill provides architectural rules, execution-strategy decisions, and conventions not available from MCP tool descriptions alone.
+  - **Single-line format**: The `description` value must be a single-line YAML string (quoted if it contains special characters). While the [Agent Skills specification](https://agentskills.io/specification.md) permits multi-line YAML scalars, some skill-hosting platforms (notably OpenClaw) use frontmatter parsers that only support single-line keys. Using a single line ensures cross-platform compatibility at no cost to platforms that do support multi-line values.
 - **`license`**: MIT.
-- **`metadata.version`**: Skill version; must be updated on each release so that changes can be identified easily.
-- **`metadata.author`**, **`metadata.github`**, **`metadata.support`**: Publisher and support information.
+- **`metadata`**: A single-line JSON object containing publisher and version information. Keys: `author`, `version`, `github`, `support`.
+  - **`version`**: Skill version; must be updated on each release so that changes can be identified easily.
+  - **`author`**, **`github`**, **`support`**: Publisher and support information.
+  - **Single-line JSON format**: The `metadata` value must be written as a single-line JSON object (e.g., `{"author":"blockscout.com","version":"0.3.0",...}`). JSON inline objects are valid YAML 1.2, so every standard YAML parser accepts them. This format satisfies both the [Agent Skills specification](https://agentskills.io/specification.md) (which requires metadata to be a map of string keys to string values) and OpenClaw's frontmatter parser (which only supports single-line keys). The multi-line nested YAML style (`metadata:\n  author: ...`) is functionally equivalent but breaks on OpenClaw's parser. Using single-line JSON ensures cross-platform compatibility at no cost to platforms that support multi-line values.
 
 ### MCP access strategy
 

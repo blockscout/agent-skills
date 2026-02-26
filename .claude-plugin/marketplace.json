@@ -13,7 +13,7 @@
       "description": "Rules, execution strategies, and conventions for ad-hoc blockchain data analysis and building tools, scripts, and applications that query the Blockscout API.",
       "source": "./blockscout-analysis/",
       "strict": false,
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "Blockscout"
       },

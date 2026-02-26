@@ -1,22 +1,8 @@
 ---
 name: blockscout-analysis
-description: >-
-  MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls
-  or writing any blockchain data scripts, even when the Blockscout MCP server
-  is already configured. Provides architectural rules, execution-strategy
-  decisions, MCP REST API conventions for scripts, endpoint reference files,
-  response transformation requirements, and output conventions that are not
-  available from MCP tool descriptions alone.
-  Use when the user asks about on-chain data, blockchain analysis, wallet
-  balances, token transfers, contract interactions, on-chain metrics, wants
-  to use the Blockscout API, or needs to build software that retrieves
-  blockchain data via Blockscout. Covers all EVM chains.
+description: "MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls or writing any blockchain data scripts, even when the Blockscout MCP server is already configured. Provides architectural rules, execution-strategy decisions, MCP REST API conventions for scripts, endpoint reference files, response transformation requirements, and output conventions that are not available from MCP tool descriptions alone. Use when the user asks about on-chain data, blockchain analysis, wallet balances, token transfers, contract interactions, on-chain metrics, wants to use the Blockscout API, or needs to build software that retrieves blockchain data via Blockscout. Covers all EVM chains."
 license: MIT
-metadata:
-  author: blockscout.com
-  version: "0.2.0"
-  github: https://www.github.com/blockscout/agent-skills
-  support: https://discord.gg/blockscout
+metadata: {"author":"blockscout.com","version":"0.3.0","github":"https://www.github.com/blockscout/agent-skills","support":"https://discord.gg/blockscout"}
 ---
 
 # Blockscout Analysis
@@ -132,7 +118,7 @@ Blockscout may expose native coin or token prices in some responses (e.g., token
 When the execution strategy calls for a script, the agent writes and runs it at runtime.
 
 - **Dependencies**: Scripts must use only the standard library of the chosen language and tools already available on the host. Do not install packages, create virtual environments, or add package manager files (`requirements.txt`, `package.json`, etc.). When a task appears to require a third-party library (e.g., ABI encoding, hashing, address checksumming), use the corresponding MCP tool instead — `read_contract` and `get_contract_abi` eliminate the need for Web3 libraries in most cases. If after exhausting standard-library and MCP tool options a third-party package is still genuinely required, the agent may install it, but must clearly state in its output what was installed and why no alternative was viable.
-- **MCP REST API access**: Scripts call the MCP REST API via HTTP GET at `https://mcp.blockscout.com/v1/{tool_name}?param1=value1&param2=value2`. Pagination uses the `cursor` query parameter (see [MCP pagination](#mcp-pagination)). Every HTTP request must include the header `User-Agent: Blockscout-SkillGuidedScript/0.2.0` (use the skill version from this document's frontmatter). Requests without a recognized User-Agent are rejected by the CDN with 403.
+- **MCP REST API access**: Scripts call the MCP REST API via HTTP GET at `https://mcp.blockscout.com/v1/{tool_name}?param1=value1&param2=value2`. Pagination uses the `cursor` query parameter (see [MCP pagination](#mcp-pagination)). Every HTTP request must include the header `User-Agent: Blockscout-SkillGuidedScript/0.3.0` (use the skill version from this document's frontmatter). Requests without a recognized User-Agent are rejected by the CDN with 403.
 - **Response handling**: Scripts must apply [response transformation](#response-transformation) rules — extract relevant fields, filter, flatten, and format output for token-efficient LLM consumption.
 
 ## Analysis Workflow

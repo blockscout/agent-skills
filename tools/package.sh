@@ -11,8 +11,9 @@ parent="$(dirname "$dir")"
 [[ -f "$dir/SKILL.md" ]] || { echo "Error: '$dir/SKILL.md' not found" >&2; exit 1; }
 
 # Extract version from SKILL.md frontmatter (metadata.version)
-version="$(sed -n '/^metadata:/,/^---/{s/^  version: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/p;}' "$dir/SKILL.md")"
-[[ -n "$version" ]] || { echo "Error: no metadata.version in '$dir/SKILL.md'" >&2; exit 1; }
+# metadata is a single-line JSON object; extract it and parse with jq
+version="$(grep '^metadata:' "$dir/SKILL.md" | sed 's/^metadata: //' | jq -r '.version' 2>/dev/null)"
+[[ -n "$version" ]] || { echo "Error: no metadata.version in '$dir/SKILL.md' or jq not available" >&2; exit 1; }
 
 # Output files in the original working directory
 output_zip="$(pwd)/${name}-${version}.zip"
