@@ -14,6 +14,7 @@ Create a modular AI agent skill for two equally important goals: (1) **blockchai
 - **16 tools**: unlock_blockchain_analysis, get_chains_list, get_address_info, get_address_by_ens_name, get_tokens_by_address, nft_tokens_by_address, get_transactions_by_address, get_token_transfers_by_address, get_block_info, get_block_number, get_transaction_info, get_contract_abi, inspect_contract_code, read_contract, lookup_token_by_symbol, direct_api_call
 - **Responses**: LLM-friendly (pre-filtered, enriched), except for `direct_api_call`, which proxies raw Blockscout API responses.
 - **`direct_api_call` response size limit**: The MCP server enforces a default response size limit (100,000 characters) on `direct_api_call` responses. When exceeded, a 413 error is returned. Native MCP calls strictly enforce this limit. REST API callers can bypass it by including the `X-Blockscout-Allow-Large-Response: true` HTTP header — but scripts using this bypass must still apply [response transformation](#response-transformation) before passing output to the LLM.
+- **Response format equivalence**: Native MCP tool calls and REST API calls to the same tool return identical JSON response structures. When writing scripts that will call the REST API, the agent can use native MCP tool calls to probe and validate the expected response shape. This is especially useful when the agent's runtime environment cannot reach the REST API directly (e.g., network restrictions) but the script will run in an unrestricted environment.
 - **Advantage**: Simplified cursor-based pagination more suitable for LLMs and scripts, and guidance in the responses to suggest the next step.
 
 #### Mandatory `unlock_blockchain_analysis` (MCP prerequisite)
@@ -79,8 +80,7 @@ The skill must use a hub-and-spoke pattern:
 - `SKILL.md` — concise entry point with decision table (execution strategy) and quick references
 - Supporting docs in `references/` — loaded on demand by the agent, one per topic
 - API reference files in `references/` — produced during the [skill preparation phase](#skill-preparation-phase)
-- Ad-hoc scripts — agent-generated at runtime for task-specific multi-step flows — must be stored in the `artifacts/` directory
-- **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts in such a manner that (a) **before** writing the script, the agent ensures all dependencies are resolved; (b) the agent **prefers alternatives** from existing libraries, packages, or CLI tools already on the host machine rather than suggesting the user install new dependencies; (c) the agent suggests the user install dependencies **only if** there is no suitable alternative available on the host.
+- **Ad-hoc script dependencies**: The skill must instruct the agent to write ad-hoc scripts using only the standard library of the chosen language and tools already available on the host. The agent must not install packages, create virtual environments, or add package manager files. When a task appears to require a third-party library (e.g., ABI encoding, hashing, address checksumming), the agent must use the corresponding MCP tool instead (e.g., `read_contract`, `get_contract_abi`). If after exhausting standard-library and MCP tool options a third-party package is still genuinely required, the agent may install it, but must clearly state in its output what was installed and why no alternative was viable.
 
 ### SKILL.md line budget
 
@@ -104,13 +104,16 @@ The `SKILL.md` file must include YAML frontmatter as required by the [Agent Skil
 ---
 name: blockscout-analysis
 description: >-
-  Analyze blockchain activity and build tools, scripts, and applications that
-  query on-chain data through the Blockscout API and MCP Server (native MCP
-  and REST API). Covers address, token, transaction, contract, and NFT
-  analysis across EVM chains. Use when the user asks about wallet balances,
-  token transfers, contract interactions, on-chain metrics, wants to use the
-  Blockscout API, or needs to build software that retrieves blockchain data
-  via Blockscout.
+  MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls
+  or writing any blockchain data scripts, even when the Blockscout MCP server
+  is already configured. Provides architectural rules, execution-strategy
+  decisions, MCP REST API conventions for scripts, endpoint reference files,
+  response transformation requirements, and output conventions that are not
+  available from MCP tool descriptions alone.
+  Use when the user asks about on-chain data, blockchain analysis, wallet
+  balances, token transfers, contract interactions, on-chain metrics, wants
+  to use the Blockscout API, or needs to build software that retrieves
+  blockchain data via Blockscout. Covers all EVM chains.
 license: MIT
 metadata:
   author: blockscout.com
@@ -121,7 +124,7 @@ metadata:
 ```
 
 - **`name`**: Must match the skill directory name (`blockscout-analysis`).
-- **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill.
+- **`description`**: Must fully reflect the skill's [Purpose](#purpose) — covering all goals the skill serves — and describe when to use it, with specific keywords that help agents identify relevant tasks. The description is the agent's primary signal for skill activation; any purpose not represented in the description may fail to trigger the skill. The description must also include a mandatory invocation directive instructing the agent to invoke the skill BEFORE making any Blockscout MCP tool calls or writing blockchain data scripts, even when the MCP server is already configured, and must explain that the skill provides architectural rules, execution-strategy decisions, and conventions not available from MCP tool descriptions alone.
 - **`license`**: MIT.
 - **`metadata.version`**: Skill version; must be updated on each release so that changes can be identified easily.
 - **`metadata.author`**, **`metadata.github`**, **`metadata.support`**: Publisher and support information.
@@ -129,6 +132,7 @@ metadata:
 ### MCP access strategy
 
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) via HTTP
+- **User-Agent requirement**: Every HTTP request to the MCP REST API must include the header `User-Agent: Blockscout-SkillGuidedScript/<skill-version>` (where `<skill-version>` is the value from `SKILL.md` frontmatter `metadata.version`). The CDN in front of the MCP REST API rejects requests without a recognized User-Agent with HTTP 403. Because standard-library HTTP clients (e.g., Python `urllib`) send a generic User-Agent that is blocked, the skill must explicitly instruct the agent to set this header in every script. This avoids the recurring failure pattern where the agent writes a script, gets a 403, and then installs a third-party HTTP library to work around it.
 - For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the agent to ensure the native MCP server is available (see [MCP server availability](#mcp-server-availability) below)
 - The choice between script-based HTTP calls and direct MCP tool calls is governed by the execution strategy (see [Execution strategy](#execution-strategy) below)
 
@@ -170,6 +174,8 @@ Choose the execution method based on task complexity, determinism, and whether s
 | Large data volume with known filtering criteria | **Script with `direct_api_call`** (script handles pagination and filtering) | Need to process many pages of data with programmatic filters. Use `direct_api_call` via the MCP REST API to access paginated endpoints. |
 
 **Combination patterns**: Many real-world queries require combining strategies. For example, a multi-chain token balance analysis might use direct tool calls to resolve an ENS name, then a script to iterate through chains and fetch/normalize balances, with the LLM providing final interpretation of which tokens are "stablecoins."
+
+**Probe-then-script**: When the execution strategy is "Script" but the agent needs to understand response structures before writing the script, call the relevant MCP tools natively with representative parameters first. Use the observed response structure to write the script targeting the REST API. Do not fall back to third-party data sources (e.g., direct RPC endpoints, third-party libraries) when the MCP REST API covers the data need.
 
 The skill's decision table in `SKILL.md` must present the execution strategy so the agent selects the appropriate method for each task.
 
@@ -224,6 +230,7 @@ The skill must describe a workflow that guides the agent through starting and co
 
 - If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not available, either provide the user with installation instructions or install or enable it automatically (if the agent has the capability to do so in its host environment).
 - **Fallback to REST API**: When the native MCP server cannot be made available, the agent must fall back to the MCP REST API (`https://mcp.blockscout.com/v1/`) for all data access. In this case, the agent should use `GET https://mcp.blockscout.com/v1/tools` to obtain tool names, descriptions, and input parameters, and then call tools via their REST endpoints.
+- **Scripts target the user's environment**: When the agent's runtime environment cannot reach the MCP REST API (e.g., sandbox network restrictions) but native MCP tools are available, the agent must still write scripts targeting the REST API — the script is intended to run in the user's environment, not the agent's sandbox. Use native MCP tool calls to validate response formats during script development (see [response format equivalence](#1-blockscout-mcp-server)).
 
 ### 4. Discover endpoints
 
@@ -247,7 +254,7 @@ For each data need identified in the task, determine whether a dedicated MCP too
 ### 6. Execute
 
 - Carry out the plan: make tool calls, write and run ad-hoc scripts, or both.
-- Ad-hoc scripts must follow the requirements from [Modular structure](#modular-structure): stored in `artifacts/`, dependencies resolved before writing the script, and preference given to already-available tools and libraries.
+- Ad-hoc scripts must follow the dependency requirements from [Modular structure](#modular-structure): standard library and host-available tools only, with MCP tools as the escape hatch before considering any package installation.
 - Scripts that call the MCP REST API (especially `direct_api_call`) must apply [response transformation](#response-transformation)—extract relevant fields, flatten nested structures, format output for token-efficient LLM consumption.
 - After execution, the agent should interpret results in the context of the user's original question rather than simply presenting raw output.
 

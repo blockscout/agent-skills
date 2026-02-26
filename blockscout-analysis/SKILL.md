@@ -1,17 +1,20 @@
 ---
 name: blockscout-analysis
 description: >-
-  Analyze blockchain activity and build tools, scripts, and applications that
-  query on-chain data through the Blockscout API and MCP Server (native MCP
-  and REST API). Covers address, token, transaction, contract, and NFT
-  analysis across EVM chains. Use when the user asks about wallet balances,
-  token transfers, contract interactions, on-chain metrics, wants to use the
-  Blockscout API, or needs to build software that retrieves blockchain data
-  via Blockscout.
+  MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls
+  or writing any blockchain data scripts, even when the Blockscout MCP server
+  is already configured. Provides architectural rules, execution-strategy
+  decisions, MCP REST API conventions for scripts, endpoint reference files,
+  response transformation requirements, and output conventions that are not
+  available from MCP tool descriptions alone.
+  Use when the user asks about on-chain data, blockchain analysis, wallet
+  balances, token transfers, contract interactions, on-chain metrics, wants
+  to use the Blockscout API, or needs to build software that retrieves
+  blockchain data via Blockscout. Covers all EVM chains.
 license: MIT
 metadata:
   author: blockscout.com
-  version: "0.1.0"
+  version: "0.2.0"
   github: https://www.github.com/blockscout/agent-skills
   support: https://discord.gg/blockscout
 ---
@@ -30,6 +33,8 @@ The server is the sole runtime data source. It is multichain — almost all tool
 |---------------|-----|----------|
 | Native MCP | `https://mcp.blockscout.com/mcp` | Direct tool calls from the agent |
 | REST API | `https://mcp.blockscout.com/v1/{tool_name}?params` | HTTP GET calls from scripts |
+
+**Response format equivalence**: Native MCP tool calls and REST API calls to the same tool return identical JSON response structures. When writing scripts targeting the REST API, use native MCP tool calls to probe and validate the expected response shape.
 
 **Available tools** (16): `unlock_blockchain_analysis`, `get_chains_list`, `get_address_info`, `get_address_by_ens_name`, `get_tokens_by_address`, `nft_tokens_by_address`, `get_transactions_by_address`, `get_token_transfers_by_address`, `get_block_info`, `get_block_number`, `get_transaction_info`, `get_contract_abi`, `inspect_contract_code`, `read_contract`, `lookup_token_by_symbol`, `direct_api_call`.
 
@@ -88,6 +93,8 @@ Choose the execution method based on task complexity, determinism, and whether s
 
 **Combination patterns**: Real-world queries often combine strategies. E.g., direct tool calls to resolve an ENS name, then a script to iterate chains and normalize balances, with the LLM interpreting which tokens are stablecoins.
 
+**Probe-then-script**: When the execution strategy is "Script" but the agent needs to understand response structures before writing the script, call the relevant MCP tools natively with representative parameters first. Use the observed response structure to write the script targeting the REST API. Do not fall back to third-party data sources (e.g., direct RPC endpoints, third-party libraries) when the MCP REST API covers the data need.
+
 ## Response Transformation
 
 Scripts querying the MCP REST API (especially `direct_api_call`) must transform responses before passing output to the LLM. Raw responses can be very heavy from a token-consumption perspective.
@@ -124,9 +131,8 @@ Blockscout may expose native coin or token prices in some responses (e.g., token
 
 When the execution strategy calls for a script, the agent writes and runs it at runtime.
 
-- **Storage**: All ad-hoc scripts must be stored in the `artifacts/` directory.
-- **Dependencies**: Before writing the script, ensure all dependencies are resolved. Prefer libraries, packages, or CLI tools already available on the host machine. Suggest installing new dependencies only if no suitable alternative exists.
-- **MCP REST API access**: Scripts call the MCP REST API via HTTP GET at `https://mcp.blockscout.com/v1/{tool_name}?param1=value1&param2=value2`. Pagination uses the `cursor` query parameter (see [MCP pagination](#mcp-pagination)).
+- **Dependencies**: Scripts must use only the standard library of the chosen language and tools already available on the host. Do not install packages, create virtual environments, or add package manager files (`requirements.txt`, `package.json`, etc.). When a task appears to require a third-party library (e.g., ABI encoding, hashing, address checksumming), use the corresponding MCP tool instead — `read_contract` and `get_contract_abi` eliminate the need for Web3 libraries in most cases. If after exhausting standard-library and MCP tool options a third-party package is still genuinely required, the agent may install it, but must clearly state in its output what was installed and why no alternative was viable.
+- **MCP REST API access**: Scripts call the MCP REST API via HTTP GET at `https://mcp.blockscout.com/v1/{tool_name}?param1=value1&param2=value2`. Pagination uses the `cursor` query parameter (see [MCP pagination](#mcp-pagination)). Every HTTP request must include the header `User-Agent: Blockscout-SkillGuidedScript/0.2.0` (use the skill version from this document's frontmatter). Requests without a recognized User-Agent are rejected by the CDN with 403.
 - **Response handling**: Scripts must apply [response transformation](#response-transformation) rules — extract relevant fields, filter, flatten, and format output for token-efficient LLM consumption.
 
 ## Analysis Workflow
@@ -150,6 +156,7 @@ Follow these phases in order when conducting a blockchain analysis task. The wor
 
 - If the strategy involves native MCP tool calls, ensure the Blockscout MCP server is available in the current environment. If it is not, either provide the user with instructions to install or enable it, or install/enable it automatically if the agent has that capability.
 - **Fallback**: When the native MCP server cannot be made available, fall back to the MCP REST API (`https://mcp.blockscout.com/v1/`) for all data access. Use `GET https://mcp.blockscout.com/v1/tools` to discover tool names, descriptions, and input parameters, then call tools via their REST endpoints.
+- **Scripts target the user's environment**: If the agent's runtime cannot reach the REST API but native MCP tools are available, still write scripts targeting the REST API — the script runs in the user's environment. Use native MCP tool calls to validate response formats during development (see response format equivalence above).
 
 ### Phase 4 — Discover endpoints
 

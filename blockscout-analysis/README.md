@@ -23,7 +23,6 @@ blockscout-analysis/
 ├── SKILL.md                           # Agent entry point — decision framework,
 │                                      #   workflow, and all behavioral instructions
 ├── README.md                          # This file (human overview)
-├── artifacts/                         # Runtime: agent-generated ad-hoc scripts
 └── references/                        # Lookup data consulted during execution
     ├── blockscout-api-index.md        # Endpoint index for direct_api_call
     ├── blockscout-api/                # Detailed endpoint parameter references
@@ -39,17 +38,10 @@ blockscout-analysis/
 
 - **`SKILL.md`** is the self-contained agent entry point. An agent that reads only this file has everything it needs to behave correctly.
 - **`references/`** contains API endpoint details the agent looks up during execution (e.g., to find parameters for `direct_api_call`).
-- **`artifacts/`** is where the agent stores scripts it generates at runtime. Contents are gitignored.
 
 ## Setup
 
-Integration depends on your agent platform. For **Claude Code**, symlink the skill directory into `.claude/skills/`:
-
-```bash
-ln -s /path/to/blockscout-analysis .claude/skills/blockscout-analysis
-```
-
-For optimal results, also configure the Blockscout MCP server (`https://mcp.blockscout.com/mcp`) in your agent's MCP settings. The skill can fall back to the REST API if native MCP is not available.
+Integration depends on your agent platform. For optimal results, configure the Blockscout MCP server (`https://mcp.blockscout.com/mcp`) in your agent's MCP settings. The skill can fall back to the REST API if native MCP is not available.
 
 ## License
 
