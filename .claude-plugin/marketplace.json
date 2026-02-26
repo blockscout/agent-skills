@@ -25,6 +25,7 @@
       "skills": ["./"],
       "mcpServers": {
         "blockscout": {
+          "type": "http",
           "url": "https://mcp.blockscout.com/mcp"
         }
       }
