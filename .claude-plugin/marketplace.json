@@ -1,0 +1,33 @@
+{
+  "name": "blockscout-ai",
+  "owner": {
+    "name": "Blockscout"
+  },
+  "metadata": {
+    "description": "Blockscout plugins for AI-assisted blockchain workflows",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "blockscout-analysis",
+      "description": "Rules, execution strategies, and conventions for ad-hoc blockchain data analysis and building tools, scripts, and applications that query the Blockscout API.",
+      "source": "./blockscout-analysis/",
+      "strict": false,
+      "version": "0.2.0",
+      "author": {
+        "name": "Blockscout"
+      },
+      "homepage": "https://blockscout.com",
+      "repository": "https://github.com/blockscout/agent-skills",
+      "license": "MIT",
+      "keywords": ["blockchain", "data", "evm", "contract", "address", "wallet", "web3", "defi", "blockscout", "transaction", "ens", "token", "analysis", "development", "api"],
+      "category": "data",
+      "skills": ["./"],
+      "mcpServers": {
+        "blockscout": {
+          "url": "https://mcp.blockscout.com/mcp"
+        }
+      }
+    }
+  ]
+}
