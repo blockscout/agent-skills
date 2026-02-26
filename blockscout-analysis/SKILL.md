@@ -2,11 +2,7 @@
 name: blockscout-analysis
 description: "MANDATORY — invoke this skill BEFORE making any Blockscout MCP tool calls or writing any blockchain data scripts, even when the Blockscout MCP server is already configured. Provides architectural rules, execution-strategy decisions, MCP REST API conventions for scripts, endpoint reference files, response transformation requirements, and output conventions that are not available from MCP tool descriptions alone. Use when the user asks about on-chain data, blockchain analysis, wallet balances, token transfers, contract interactions, on-chain metrics, wants to use the Blockscout API, or needs to build software that retrieves blockchain data via Blockscout. Covers all EVM chains."
 license: MIT
-metadata:
-  author: blockscout.com
-  version: "0.2.0"
-  github: https://www.github.com/blockscout/agent-skills
-  support: https://discord.gg/blockscout
+metadata: {"author":"blockscout.com","version":"0.2.0","github":"https://www.github.com/blockscout/agent-skills","support":"https://discord.gg/blockscout"}
 ---
 
 # Blockscout Analysis
