@@ -14,15 +14,19 @@ parent="$(dirname "$dir")"
 version="$(sed -n '/^metadata:/,/^---/{s/^  version: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/p;}' "$dir/SKILL.md")"
 [[ -n "$version" ]] || { echo "Error: no metadata.version in '$dir/SKILL.md'" >&2; exit 1; }
 
-# Output zip in the original working directory
-output="$(pwd)/${name}-${version}.zip"
-rm -f "$output"
+# Output files in the original working directory
+output_zip="$(pwd)/${name}-${version}.zip"
+output_skill="$(pwd)/${name}-${version}.skill"
+rm -f "$output_zip" "$output_skill"
 
 # cd to parent so git ls-files produces clean <name>/... paths
 cd "$parent"
 
 git ls-files "$name" \
   | grep -v -E "^${name}/(\.gitignore$|README\.md$|agents/)" \
-  | zip "$output" -@
+  | zip "$output_zip" -@
 
-echo "Created $output"
+cp "$output_zip" "$output_skill"
+
+echo "Created $output_zip"
+echo "Created $output_skill"
