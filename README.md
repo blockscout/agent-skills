@@ -24,7 +24,7 @@ To create a distributable zip of a skill:
 bash tools/package.sh <skill-directory>
 ```
 
-This produces `<skill-directory>-<version>.zip` (version read from `SKILL.md` frontmatter) containing all tracked files except `.gitignore` and `README.md`.
+This produces `<skill-directory>-<version>.zip` and `<skill-directory>-<version>.skill` (version read from `SKILL.md` frontmatter) containing all tracked files except `.gitignore` and `README.md`. The `.skill` file is identical to the `.zip` but uses the extension recognised by Claude Desktop and Gemini CLI for one-click import.
 
 ## License
 
