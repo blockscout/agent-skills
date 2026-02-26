@@ -22,7 +22,7 @@ rm -f "$output"
 cd "$parent"
 
 git ls-files "$name" \
-  | grep -v -E "^${name}/(\.gitignore|README\.md)$" \
+  | grep -v -E "^${name}/(\.gitignore$|README\.md$|agents/)" \
   | zip "$output" -@
 
 echo "Created $output"

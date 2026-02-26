@@ -54,6 +54,10 @@ The specification is [`blockscout-api-composition-spec.md`](blockscout-api-compo
 
 The specification is [`chainscout-api-spec.md`](chainscout-api-spec.md). It describes the preparation to produce the API reference file in `references/chainscout-api.md`. The agent consults it when it needs to discover the Blockscout instance URL for a specific chain.
 
+### OpenAI Codex Agent Metadata
+
+The specification is [`openai-yaml-spec.md`](openai-yaml-spec.md). It describes the `agents/openai.yaml` file that declares UI metadata and MCP server dependencies for the OpenAI Codex platform. This file enables Codex to automatically configure the Blockscout MCP server when the skill is installed.
+
 ## Design Requirements
 
 ### Conformance to Agent Skills standard
