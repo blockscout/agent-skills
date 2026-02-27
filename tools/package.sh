@@ -24,7 +24,7 @@ rm -f "$output_zip" "$output_skill"
 cd "$parent"
 
 git ls-files "$name" \
-  | grep -v -E "^${name}/(\.gitignore$|README\.md$|agents/)" \
+  | grep -v -E "^${name}/(\.gitignore|README\.md)$" \
   | zip "$output_zip" -@
 
 cp "$output_zip" "$output_skill"
