@@ -23,8 +23,6 @@ blockscout-analysis/
 ├── SKILL.md                           # Agent entry point — decision framework,
 │                                      #   workflow, and all behavioral instructions
 ├── README.md                          # This file (human overview)
-├── agents/
-│   └── openai.yaml                    # OpenAI Codex agent metadata and MCP dependency
 └── references/                        # Lookup data consulted during execution
     ├── blockscout-api-index.md        # Endpoint index for direct_api_call
     ├── blockscout-api/                # Detailed endpoint parameter references
