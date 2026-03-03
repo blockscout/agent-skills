@@ -2,9 +2,31 @@
 
 ### Configuration
 
+#### GET /api/v2/config/backend
+
+Returns non-secret backend environment variables in the snake case (e.g., chain_type).
+
+- **Parameters**
+
+  | Name | Type | Required | Description |
+  | ---- | ---- | -------- | ----------- |
+  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
+  | `key` | `string` | No | Secret key for getting access to restricted resources |
+
 #### GET /api/v2/config/backend-version
 
 Returns application backend version string.
+
+- **Parameters**
+
+  | Name | Type | Required | Description |
+  | ---- | ---- | -------- | ----------- |
+  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
+  | `key` | `string` | No | Secret key for getting access to restricted resources |
+
+#### GET /api/v2/config/db-background-migrations
+
+Returns list of background migrations that are not yet completed.
 
 - **Parameters**
 
