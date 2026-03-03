@@ -14,6 +14,18 @@ Each skill is a self-contained directory of structured instructions and helper s
 
 Each skill is a directory with a `SKILL.md` entry point and supporting docs/scripts. Integration depends on your agent platform — see examples below.
 
+### Skills CLI (40+ agents)
+
+One command installs the skill to 40+ coding agents (Claude Code, Codex, Cursor, Cline, Copilot, Windsurf, Continue, and more):
+
+```sh
+npx skills@latest add https://github.com/blockscout/agent-skills --skill blockscout-analysis
+```
+
+Use `-g` to install globally, or `-a <agent>` to target a specific agent. See [skills.sh/docs](https://skills.sh/docs) for the full list of supported agents and options.
+
+> **Note:** The Skills CLI installs the skill instructions only. The Blockscout MCP server is **not** installed automatically and must be configured separately for your agent.
+
 ### Claude Code
 
 No separate MCP server configuration needed — it is set up automatically as part of the plugin installation.
