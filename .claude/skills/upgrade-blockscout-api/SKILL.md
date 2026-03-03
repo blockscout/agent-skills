@@ -3,6 +3,8 @@ name: upgrade-blockscout-api
 description: "Upgrade the blockscout-analysis skill's API reference files to the latest Blockscout backend and Stats service releases. Run when a new Blockscout version is issued to refresh swagger data, regenerate endpoint documentation, patch MCP-sourced and JSON-RPC endpoints, and remove MCP-duplicated entries."
 disable-model-invocation: true
 allowed-tools: Bash(python3 *), Bash(git *), Read, Edit, Grep, Glob
+metadata:
+  internal: true
 ---
 
 # Upgrade Blockscout API
