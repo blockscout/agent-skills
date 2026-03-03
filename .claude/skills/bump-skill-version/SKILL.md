@@ -2,6 +2,8 @@
 name: bump-skill-version
 description: "Bump the blockscout-analysis skill version number across all files. Use after the API reference files have been updated and you are ready to tag a new release. Pass the new version as an argument (e.g., '0.4.0')."
 allowed-tools: Read, Edit, Grep
+metadata:
+  internal: true
 ---
 
 # Bump Skill Version
