@@ -19,20 +19,32 @@ from pathlib import Path
 
 import requests
 
+# Add the directory containing this script to sys.path for local imports.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from common import (  # noqa: E402
+    REFERENCES_DIR,
+    API_DIR,
+    TOPIC_FILE_ORDER,
+    TOPIC_HEADINGS,
+    classify_endpoint,
+    heading_for,
+    format_index_line,
+)
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
 MCP_ENDPOINT = "https://mcp.blockscout.com/v1/unlock_blockchain_analysis"
-INDEX_FILE = Path("blockscout-analysis/references/blockscout-api-index.md")
-API_DIR = Path("blockscout-analysis/references/blockscout-api")
+INDEX_FILE = REFERENCES_DIR / "blockscout-api-index.md"
 
 # ---------------------------------------------------------------------------
-# Classification config
+# Script-specific classification config
 # ---------------------------------------------------------------------------
 
 # chain_family → (filename, heading) special-case overrides (spec Section 6.1)
-CHAIN_FAMILY_SPECIAL_CASES: dict[str, tuple[str, str]] = {
+CHAIN_FAMILY_MAP: dict[str, tuple[str, str]] = {
     "Ethereum Mainnet and Gnosis": ("ethereum.md",      "Ethereum PoS Chains"),
     "zkEVM":                       ("polygon-zkevm.md", "Polygon zkEVM"),
     "zkSync":                      ("zksync.md",        "ZkSync"),
@@ -45,51 +57,6 @@ COMMON_GROUP_MAP: dict[str, tuple[str, str]] = {
     "User Operations": ("transactions.md", "User Operations"),
     "Tokens & NFTs":   ("tokens.md",       "Tokens"),
 }
-
-# Prefix table for fallback classification of common endpoints (spec Section 6.2).
-# MCP paths already include /api prefix, unlike swagger paths in api-file-generator.py.
-# Sorted by descending prefix length at module load time.
-_DEFAULT_PREFIXES_RAW: list[tuple[str, str]] = [
-    ("/api/v2/blocks/",              "blocks.md"),
-    ("/api/v2/internal-transactions","transactions.md"),
-    ("/api/v2/transactions/",        "transactions.md"),
-    ("/api/v2/token-transfers",      "tokens.md"),
-    ("/api/v2/addresses/",           "addresses.md"),
-    ("/api/v2/tokens/",              "tokens.md"),
-    ("/api/v2/smart-contracts/",     "smart-contracts.md"),
-    ("/api/v2/search/",              "search.md"),
-    ("/api/v1/search",               "search.md"),
-    ("/api/v2/stats",                "stats.md"),
-    ("/api/v2/main-page/",           "stats.md"),
-    ("/api/v2/config/",              "config.md"),
-    ("/api/v2/withdrawals",          "ethereum.md"),
-    ("/stats-service/",              "stats.md"),
-]
-
-_SORTED_PREFIXES: list[tuple[str, str]] = sorted(
-    _DEFAULT_PREFIXES_RAW,
-    key=lambda x: len(x[0].rstrip("/")),
-    reverse=True,
-)
-
-# Default H3 section headings per topic file.
-TOPIC_H3_HEADINGS: dict[str, str] = {
-    "blocks.md":          "Blocks",
-    "transactions.md":    "Transactions",
-    "addresses.md":       "Addresses",
-    "tokens.md":          "Tokens",
-    "smart-contracts.md": "Smart Contracts",
-    "search.md":          "Search",
-    "stats.md":           "Chain Statistics",
-    "config.md":          "Configuration",
-    "ethereum.md":        "Ethereum PoS Chains",
-}
-
-# Fixed topic files in their canonical index order.
-TOPIC_FILE_ORDER: list[str] = [
-    "blocks.md", "transactions.md", "addresses.md", "tokens.md",
-    "smart-contracts.md", "search.md", "stats.md", "config.md",
-]
 
 # HTTP method sort order for tie-breaking (spec Section 8.1).
 METHOD_ORDER = {"DELETE": 0, "GET": 1, "PATCH": 2, "POST": 3, "PUT": 4}
@@ -158,11 +125,11 @@ def build_normalised_paths() -> tuple[set[str], int]:
         sys.exit(1)
 
     normalised: set[str] = set()
-    # Match lines like: - `/path/to/endpoint`: description
-    # or:               - /path/to/endpoint: description
+    # Match lines with description:    - `/path`: description text
+    # and lines without description:   - `/path`
     for line in text.splitlines():
         line = line.strip()
-        m = re.match(r'^-\s+`?(/[^`:\s]+)`?\s*:', line)
+        m = re.match(r'^-\s+`(/[^`]+)`', line)
         if m:
             path = m.group(1)
             normalised.add(_normalise(path))
@@ -204,24 +171,36 @@ def find_missing(
 
 def _derive_chain_info(chain_family: str) -> tuple[str, str]:
     """Return (filename, h3_heading) for a chain_family value."""
-    if chain_family in CHAIN_FAMILY_SPECIAL_CASES:
-        return CHAIN_FAMILY_SPECIAL_CASES[chain_family]
+    if chain_family in CHAIN_FAMILY_MAP:
+        return CHAIN_FAMILY_MAP[chain_family]
     # Auto-derive
     filename = re.sub(r'[\s_]+', '-', chain_family).lower() + ".md"
     heading = re.sub(r'[-_]+', ' ', chain_family).title()
     return filename, heading
 
 
-def _classify_prefix(path: str) -> tuple[str, str] | None:
+def _classify_by_path(path: str) -> tuple[str, str] | None:
     """
-    Longest-prefix match on DEFAULT_PREFIXES.
+    Classify an MCP endpoint path using classify_endpoint() from common.py.
+
+    MCP paths have /api prefix (e.g. /api/v2/blocks/) or /stats-service/ prefix.
+    Strips the prefix and delegates to the shared 3-pass pipeline.
+
     Returns (filename, h3_section) or None if no match.
     """
-    for pfx, fname in _SORTED_PREFIXES:
-        pfx_base = pfx.rstrip("/")
-        if path == pfx_base or path.startswith(pfx_base + "/"):
-            section = TOPIC_H3_HEADINGS.get(fname, fname)
-            return fname, section
+    # Handle /stats-service/ prefix directly — not in the shared pipeline.
+    if path.startswith("/stats-service/"):
+        return "stats.md", "Stats Service"
+
+    # Strip /api prefix to obtain the raw swagger path for classify_endpoint().
+    raw_path = path
+    if path.startswith("/api"):
+        raw_path = path[4:]  # "/api/v2/..." → "/v2/..."
+
+    fname = classify_endpoint(raw_path)
+    if fname is not None:
+        return fname, heading_for(fname)
+
     return None
 
 
@@ -249,7 +228,7 @@ def classify_endpoints(
                 elif path.startswith("/stats-service/"):
                     bucket = ("stats.md", "Stats Service")
                 else:
-                    result_pfx = _classify_prefix(path)
+                    result_pfx = _classify_by_path(path)
                     if result_pfx is None:
                         print(f"Warning: cannot classify Stats endpoint (unknown path prefix): {path}")
                         continue
@@ -258,8 +237,8 @@ def classify_endpoints(
                 fname, section = COMMON_GROUP_MAP[group]
                 bucket = (fname, section)
             else:
-                # Fallback: prefix matching
-                result_pfx = _classify_prefix(path)
+                # Fallback: classify_endpoint() from common.py via _classify_by_path()
+                result_pfx = _classify_by_path(path)
                 if result_pfx is None:
                     print(f"Warning: unknown group '{group}' and no path-prefix match for: {path}")
                     continue
@@ -457,26 +436,13 @@ def patch_api_file(
 
 def _make_index_line(ep: dict) -> str:
     """Format a single index line item."""
-    path = ep["path"]
-    desc = ep.get("description", "")
-    return f"- `{path}`: {desc}"
+    return format_index_line(ep["path"], ep.get("description", ""))
 
 
 def _get_display_name_for_file(filename: str, h3_section: str) -> str:
     """Return the display name (index H2 heading text) for a given api file."""
-    # For topic files, use their canonical display names
-    topic_display = {
-        "blocks.md":          "Blocks",
-        "transactions.md":    "Transactions",
-        "addresses.md":       "Addresses",
-        "tokens.md":          "Tokens",
-        "smart-contracts.md": "Smart Contracts",
-        "search.md":          "Search",
-        "stats.md":           "Stats",
-        "config.md":          "Configuration",
-    }
-    if filename in topic_display:
-        return topic_display[filename]
+    if filename in TOPIC_HEADINGS:
+        return TOPIC_HEADINGS[filename]
     # For chain files, use the H3 heading
     return h3_section
 

@@ -17,6 +17,20 @@ from typing import Optional
 
 import yaml
 
+# Add the directory containing this script to sys.path for local imports.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from common import (  # noqa: E402
+    REFERENCES_DIR,
+    API_DIR,
+    TOPIC_FILE_ORDER,
+    TOPIC_HEADINGS,
+    CHAIN_FILE_CONFIG,
+    classify_endpoint,
+    chain_file_info,
+    format_index_line,
+)
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -25,91 +39,14 @@ MAIN_INDEXER_MAP = Path("blockscout-analysis/.build/swaggers/main-indexer/endpoi
 STATS_SERVICE_MAP = Path("blockscout-analysis/.build/swaggers/stats-service/endpoints_map.json")
 MAIN_INDEXER_SWAGGER_DIR = Path("blockscout-analysis/.build/swaggers/main-indexer")
 STATS_SERVICE_SWAGGER_DIR = Path("blockscout-analysis/.build/swaggers/stats-service")
-REFERENCES_DIR = Path("blockscout-analysis/references")
-API_DIR = REFERENCES_DIR / "blockscout-api"
 
 # ---------------------------------------------------------------------------
-# Classification config
+# Script-specific config
 # ---------------------------------------------------------------------------
-
-# Default variant: prefix → output filename.
-# Will be sorted by len(pfx.rstrip('/')) descending at module load time.
-DEFAULT_PREFIXES: list[tuple[str, str]] = [
-    ("/v2/internal-transactions", "transactions.md"),  # top-level; block-scoped stays under /v2/blocks/
-    ("/v2/blocks/",               "blocks.md"),
-    ("/v2/token-transfers",       "tokens.md"),        # global token transfers belong with tokens
-    ("/v2/transactions/",         "transactions.md"),
-    ("/v2/addresses/",            "addresses.md"),
-    ("/v2/tokens/",               "tokens.md"),
-    ("/v2/smart-contracts/",      "smart-contracts.md"),
-    ("/v2/search/",               "search.md"),
-    ("/v1/search",                "search.md"),
-    ("/v2/stats",                 "stats.md"),
-    ("/v2/main-page/",            "stats.md"),
-    ("/v2/config/",               "config.md"),
-    ("/v2/withdrawals",           "ethereum.md"),      # validator withdrawals are PoS-specific
-]
-
-_SORTED_PREFIXES: list[tuple[str, str]] = sorted(
-    DEFAULT_PREFIXES,
-    key=lambda x: len(x[0].rstrip("/")),
-    reverse=True,
-)
-
-# Fixed topic file ordering and display names.
-# Note: withdrawals.md is intentionally absent — those endpoints route to ethereum.md.
-TOPIC_FILE_ORDER: list[str] = [
-    "blocks.md", "transactions.md", "addresses.md", "tokens.md",
-    "smart-contracts.md", "search.md", "stats.md", "config.md",
-]
-
-# H3 heading for topic files (also used as index display name, except stats.md).
-TOPIC_HEADINGS: dict[str, str] = {
-    "blocks.md":          "Blocks",
-    "transactions.md":    "Transactions",
-    "addresses.md":       "Addresses",
-    "tokens.md":          "Tokens",
-    "smart-contracts.md": "Smart Contracts",
-    "search.md":          "Search",
-    "stats.md":           "Stats",        # index display name; file uses two H3s
-    "config.md":          "Configuration",
-}
 
 # Stats.md section names.
 STATS_CHAIN_SECTION = "Chain Statistics"
 STATS_SERVICE_SECTION = "Stats Service"
-
-# Chain-specific variant special-case configuration.
-VARIANT_SPECIAL_CASES: dict[str, dict] = {
-    "ethereum": {
-        "filename": "ethereum.md",
-        "heading":  "Ethereum PoS Chains",
-        "preamble": (
-            "These endpoints are only available on chains that use Ethereum "
-            "proof-of-stake consensus, such as **Ethereum Mainnet** and **Gnosis Chain**. "
-            "They expose beacon chain deposit tracking and EIP-4844 blob transaction data "
-            "that do not exist on other EVM networks."
-        ),
-    },
-    "optimism-celo": {
-        "split": True,
-        "celo_filename":     "celo.md",
-        "celo_heading":      "Celo",
-        "optimism_filename": "optimism.md",
-        "optimism_heading":  "Optimism",
-    },
-    "polygon_zkevm": {"filename": "polygon-zkevm.md", "heading": "Polygon zkEVM"},
-    "zksync":        {"filename": "zksync.md",         "heading": "ZkSync"},
-}
-
-# Reverse map: filename → {heading, preamble}
-# Used when classify_default_endpoint() returns a chain-specific filename
-# (e.g. ethereum.md for /v2/withdrawals endpoints).
-_CHAIN_FILE_INFO: dict[str, dict] = {
-    sc["filename"]: {"heading": sc["heading"], "preamble": sc.get("preamble")}
-    for sc in VARIANT_SPECIAL_CASES.values()
-    if not sc.get("split") and "filename" in sc
-}
 
 # Path parameter substitution heuristics for curl examples.
 # Each entry: ([keyword, ...], replacement_value). First match wins.
@@ -167,43 +104,15 @@ def load_swagger(path: Path, cache: dict) -> Optional[dict]:
 # Classification
 # ---------------------------------------------------------------------------
 
-def classify_default_endpoint(endpoint_path: str) -> Optional[str]:
-    """
-    Classify a default-variant swagger path using longest-prefix matching.
-    Returns output filename, or None if unmatched (prints a warning).
-    """
-    for pfx, fname in _SORTED_PREFIXES:
-        pfx_base = pfx.rstrip("/")
-        if endpoint_path == pfx_base or endpoint_path.startswith(pfx_base + "/"):
-            return fname
-    print(f"Warning: default endpoint matches no prefix, skipping: {endpoint_path}")
-    return None
-
-
-def derive_variant_info(variant: str) -> dict:
-    """
-    Return {filename, heading, preamble} for a non-default, non-split variant.
-    Applies VARIANT_SPECIAL_CASES first; auto-derives for unknown variants.
-    """
-    sc = VARIANT_SPECIAL_CASES.get(variant)
-    if sc and not sc.get("split"):
-        return {
-            "filename": sc["filename"],
-            "heading":  sc["heading"],
-            "preamble": sc.get("preamble"),
-        }
-    # Auto-derive
-    filename = variant.replace("_", "-") + ".md"
-    heading = variant.replace("_", " ").replace("-", " ").title()
-    return {"filename": filename, "heading": heading, "preamble": None}
-
-
 def classify_records(
     main_records: list[dict],
     stats_records: list[dict],
 ) -> tuple[dict, dict]:
     """
     Filter to GET-only, transform paths, classify into output files.
+
+    Uses a unified path-based classification pipeline for all main-indexer
+    records regardless of which swagger variant contributed them.
 
     Returns:
         classified:  {filename: [enriched_record_dict, ...]}
@@ -228,6 +137,13 @@ def classify_records(
             classified[fname] = []
         classified[fname].append(enriched)
 
+    def _ensure_chain_meta(fname: str) -> str:
+        """Register chain file metadata if not yet seen. Returns the section heading."""
+        if fname not in file_meta:
+            info = chain_file_info(fname)
+            file_meta[fname] = {"display_name": info["heading"], "preamble": info["preamble"]}
+        return file_meta[fname]["display_name"]
+
     # Process main-indexer records.
     for rec in main_records:
         if rec.get("method") != "GET":
@@ -239,50 +155,28 @@ def classify_records(
         sf = rec["swagger_file"]
         transformed = "/api" + endpoint
 
-        if sf == "default/swagger.yaml":
-            fname = classify_default_endpoint(endpoint)
-            if fname is None:
-                continue
-            # Determine section heading; handle chain-specific routing targets.
+        fname = classify_endpoint(endpoint)
+
+        if fname is not None:
+            # Determine section heading.
             if fname == "stats.md":
                 section = STATS_CHAIN_SECTION
             elif fname in TOPIC_HEADINGS:
                 section = TOPIC_HEADINGS[fname]
             else:
-                # Default-variant endpoint routed to a chain-specific file
-                # (currently only ethereum.md for /v2/withdrawals).
-                info = _CHAIN_FILE_INFO.get(
-                    fname,
-                    {"heading": fname.replace(".md", "").replace("-", " ").title(), "preamble": None},
-                )
-                section = info["heading"]
-                if fname not in file_meta:
-                    file_meta[fname] = {"display_name": info["heading"], "preamble": info["preamble"]}
-                if fname not in classified:
-                    classified[fname] = []
+                # Chain-specific file — register metadata and use its heading.
+                section = _ensure_chain_meta(fname)
             _add(rec, fname, transformed, section)
 
-        elif sf.split("/")[0] == "optimism-celo":
-            if "/celo" in endpoint:
-                fname = "celo.md"
-                heading = "Celo"
-            else:
-                fname = "optimism.md"
-                heading = "Optimism"
-            if fname not in file_meta:
-                file_meta[fname] = {"display_name": heading, "preamble": None}
-            _add(rec, fname, transformed, heading)
+        elif sf != "default/swagger.yaml":
+            # Variant name fallback for unmatched non-default endpoints.
+            variant = sf.split("/")[0]
+            fname = variant.replace("_", "-") + ".md"
+            section = _ensure_chain_meta(fname)
+            _add(rec, fname, transformed, section)
 
         else:
-            variant = sf.split("/")[0]
-            info = derive_variant_info(variant)
-            fname = info["filename"]
-            if fname not in file_meta:
-                file_meta[fname] = {
-                    "display_name": info["heading"],
-                    "preamble": info["preamble"],
-                }
-            _add(rec, fname, transformed, info["heading"])
+            print(f"Warning: default endpoint matches no prefix, skipping: {endpoint}")
 
     # Process stats-service records.
     for rec in stats_records:
@@ -485,8 +379,10 @@ def _render_index_file(
     lines = [
         "# Blockscout API Endpoints Index",
         "",
-        "Use this index to find available endpoints for the `direct_api_call` MCP tool."
-        " Each section links to a dedicated API file with full parameter details.",
+        "Use this index to find available endpoints for the `direct_api_call` Blockscout MCP tool. Follow a two-step discovery process:",
+        "",
+        "1. **Find the endpoint below** — locate it by name or category in this index.",
+        "2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types, descriptions, and examples for use with `direct_api_call`.",
     ]
 
     def _add_section(fname: str) -> None:
@@ -503,7 +399,7 @@ def _render_index_file(
         for rec in records:
             desc = rec.get("_description", "")
             path = rec["transformed_path"]
-            lines.append(f"- `{path}`: {desc}")
+            lines.append(format_index_line(path, desc))
 
     def _get_index_records(fname: str, classified: dict) -> list[dict]:
         """Return records for the index in file order (Chain Stats first for stats.md)."""
@@ -617,8 +513,10 @@ def main() -> None:
     print("Classifying endpoints...")
     _print_classification_summary(classified, chain_files_sorted)
 
-    # 3. Create output directories.
+    # 3. Create output directories and clean stale files.
     API_DIR.mkdir(parents=True, exist_ok=True)
+    for stale in API_DIR.glob("*.md"):
+        stale.unlink()
 
     # 4. Enrich records: resolve descriptions and extract parameters.
     swagger_cache: dict = {}
