@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Common utilities shared between swagger indexer scripts.
+Common utilities shared between swagger indexer and API file generation scripts.
 """
 
 import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 import requests
 import yaml
@@ -15,6 +16,201 @@ import yaml
 # ---------------------------------------------------------------------------
 
 HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head", "options"}
+
+# ---------------------------------------------------------------------------
+# Output paths
+# ---------------------------------------------------------------------------
+
+REFERENCES_DIR = Path("blockscout-analysis/references")
+API_DIR = REFERENCES_DIR / "blockscout-api"
+
+# ---------------------------------------------------------------------------
+# Classification config
+# ---------------------------------------------------------------------------
+
+# Fixed topic file ordering and display names.
+# Note: withdrawals.md is intentionally absent — those endpoints route to ethereum.md.
+TOPIC_FILE_ORDER: list[str] = [
+    "blocks.md", "transactions.md", "addresses.md", "tokens.md",
+    "smart-contracts.md", "search.md", "stats.md", "config.md",
+]
+
+# Topic filename → display name / index heading.
+# Note: stats.md maps to "Stats" (index display name); the file H3s are
+# "Chain Statistics" and "Stats Service", handled by each consuming script.
+TOPIC_HEADINGS: dict[str, str] = {
+    "blocks.md":          "Blocks",
+    "transactions.md":    "Transactions",
+    "addresses.md":       "Addresses",
+    "tokens.md":          "Tokens",
+    "smart-contracts.md": "Smart Contracts",
+    "search.md":          "Search",
+    "stats.md":           "Stats",
+    "config.md":          "Configuration",
+}
+
+# Chain-specific prefix table (Pass 1 in classification pipeline).
+# Raw swagger paths (no /api prefix).
+CHAIN_PREFIXES: list[tuple[str, str]] = [
+    # Cross-cutting batch paths under topic prefixes
+    ("/v2/blocks/arbitrum-batch/",       "arbitrum.md"),
+    ("/v2/blocks/optimism-batch/",       "optimism.md"),
+    ("/v2/blocks/scroll-batch/",         "scroll.md"),
+    ("/v2/transactions/arbitrum-batch/", "arbitrum.md"),
+    ("/v2/transactions/optimism-batch/", "optimism.md"),
+    ("/v2/transactions/scroll-batch/",   "scroll.md"),
+    ("/v2/transactions/zkevm-batch/",    "polygon-zkevm.md"),
+    ("/v2/transactions/zksync-batch/",   "zksync.md"),
+    # Main-page chain references
+    ("/v2/main-page/arbitrum/",          "arbitrum.md"),
+    ("/v2/main-page/optimism-deposits",  "optimism.md"),
+    ("/v2/main-page/zksync/",            "zksync.md"),
+    # Validators
+    ("/v2/validators/stability",         "stability.md"),
+    ("/v2/validators/zilliqa",           "zilliqa.md"),
+    # Direct chain paths
+    ("/v2/arbitrum/",                    "arbitrum.md"),
+    ("/v2/beacon/",                      "ethereum.md"),
+    ("/v2/celo/",                        "celo.md"),
+    ("/v2/mud/",                         "mud.md"),
+    ("/v2/optimism/",                    "optimism.md"),
+    ("/v2/scroll/",                      "scroll.md"),
+    ("/v2/shibarium/",                   "shibarium.md"),
+    ("/v2/zkevm/",                       "polygon-zkevm.md"),
+    ("/v2/zksync/",                      "zksync.md"),
+    # Withdrawals (Ethereum PoS only)
+    ("/v2/withdrawals",                  "ethereum.md"),
+]
+
+# Chain keyword rules (Pass 2 in classification pipeline).
+# Match when a keyword appears as a path segment (between slashes).
+CHAIN_KEYWORD_RULES: list[tuple[str, str]] = [
+    ("celo",   "celo.md"),      # e.g. /v2/addresses/{addr}/celo/...
+    ("beacon", "ethereum.md"),  # e.g. /v2/{base}/{param}/beacon/...
+]
+
+# Topic-file prefix table (Pass 3 in classification pipeline).
+# Raw swagger paths (no /api prefix).
+TOPIC_PREFIXES: list[tuple[str, str]] = [
+    ("/v2/internal-transactions", "transactions.md"),  # top-level; block-scoped stays under /v2/blocks/
+    ("/v2/blocks/",               "blocks.md"),
+    ("/v2/token-transfers",       "tokens.md"),        # global token transfers belong with tokens
+    ("/v2/transactions/",         "transactions.md"),
+    ("/v2/addresses/",            "addresses.md"),
+    ("/v2/tokens/",               "tokens.md"),
+    ("/v2/smart-contracts/",      "smart-contracts.md"),
+    ("/v2/search/",               "search.md"),
+    ("/v1/search",                "search.md"),
+    ("/v2/stats",                 "stats.md"),
+    ("/v2/main-page/",            "stats.md"),
+    ("/v2/config/",               "config.md"),
+]
+
+# Chain file heading/preamble overrides keyed by output filename.
+# When no override exists, heading is auto-derived from the filename.
+CHAIN_FILE_CONFIG: dict[str, dict] = {
+    "ethereum.md": {
+        "heading": "Ethereum PoS Chains",
+        "preamble": (
+            "These endpoints are only available on chains that use Ethereum "
+            "proof-of-stake consensus, such as **Ethereum Mainnet** and **Gnosis Chain**. "
+            "They expose beacon chain deposit tracking and EIP-4844 blob transaction data "
+            "that do not exist on other EVM networks."
+        ),
+    },
+    "polygon-zkevm.md": {"heading": "Polygon zkEVM"},
+    "zksync.md":         {"heading": "ZkSync"},
+}
+
+# ---------------------------------------------------------------------------
+# Classification functions
+# ---------------------------------------------------------------------------
+
+def sort_prefixes(table: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """Sort a prefix table by descending stripped length (longest match first)."""
+    return sorted(table, key=lambda x: len(x[0].rstrip("/")), reverse=True)
+
+
+# Pre-sorted tables (used internally by classify_endpoint).
+_SORTED_CHAIN_PREFIXES = sort_prefixes(CHAIN_PREFIXES)
+_SORTED_TOPIC_PREFIXES = sort_prefixes(TOPIC_PREFIXES)
+
+
+def classify_endpoint(endpoint: str) -> Optional[str]:
+    """
+    Unified path-based classification pipeline on a raw swagger path.
+
+    Pass 1 — Chain-specific prefix (longest match first).
+    Pass 2 — Chain keyword in path segments, plus /blobs suffix rule.
+    Pass 3 — Topic prefix (longest match first).
+
+    Returns output filename, or None if no rule matched.
+    """
+    # Pass 1: Chain-specific prefix
+    for pfx, fname in _SORTED_CHAIN_PREFIXES:
+        pfx_base = pfx.rstrip("/")
+        if endpoint == pfx_base or endpoint.startswith(pfx_base + "/"):
+            return fname
+
+    # Pass 2: Chain keyword in path segments
+    segments = endpoint.split("/")
+    for keyword, fname in CHAIN_KEYWORD_RULES:
+        if keyword in segments:
+            return fname
+    if endpoint.endswith("/blobs"):
+        return "ethereum.md"
+
+    # Pass 3: Topic prefix
+    for pfx, fname in _SORTED_TOPIC_PREFIXES:
+        pfx_base = pfx.rstrip("/")
+        if endpoint == pfx_base or endpoint.startswith(pfx_base + "/"):
+            return fname
+
+    return None
+
+
+def chain_file_info(filename: str) -> dict:
+    """
+    Return {heading, preamble} for a chain-specific output file.
+    Uses CHAIN_FILE_CONFIG overrides; auto-derives heading from filename otherwise.
+    """
+    cfg = CHAIN_FILE_CONFIG.get(filename, {})
+    heading = cfg.get("heading") or filename.replace(".md", "").replace("-", " ").title()
+    preamble = cfg.get("preamble")
+    return {"heading": heading, "preamble": preamble}
+
+
+def heading_for(filename: str) -> str:
+    """
+    Return the primary H3 section heading for any output file.
+
+    For topic files: returns the canonical H3 heading.
+    For chain files: uses CHAIN_FILE_CONFIG overrides or auto-derives from filename.
+
+    Note: stats.md returns "Chain Statistics" (the primary H3 section).
+    The "Stats Service" section is handled by each consuming script individually.
+    """
+    # Check CHAIN_FILE_CONFIG first (handles ethereum.md, polygon-zkevm.md, zksync.md)
+    cfg = CHAIN_FILE_CONFIG.get(filename, {})
+    if "heading" in cfg:
+        return cfg["heading"]
+    # Topic files
+    if filename in TOPIC_HEADINGS:
+        if filename == "stats.md":
+            return "Chain Statistics"
+        return TOPIC_HEADINGS[filename]
+    # Auto-derive for unknown chain files
+    return filename.replace(".md", "").replace("-", " ").title()
+
+
+def format_index_line(path: str, desc: str) -> str:
+    """
+    Format a single index line item.
+    Omits colon and description when desc is empty (no trailing whitespace).
+    """
+    if desc:
+        return f"- `{path}`: {desc}"
+    return f"- `{path}`"
 
 
 # ---------------------------------------------------------------------------

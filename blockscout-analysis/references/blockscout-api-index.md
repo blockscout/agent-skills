@@ -87,19 +87,21 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 - `/api/v2/stats/charts/secondary-coin-market`: Returns market history for the secondary coin used for charting.
 - `/api/v2/stats/charts/transactions`: Retrieves time series data of daily transaction counts for rendering charts.
 - `/api/v2/stats/hot-smart-contracts`: Retrieves paginated list of hot smart-contracts
-- `/stats-service/api/v1/counters`:
-- `/stats-service/api/v1/lines`:
-- `/stats-service/api/v1/lines/{name}`:
-- `/stats-service/api/v1/pages/contracts`:
-- `/stats-service/api/v1/pages/interchain/main`:
-- `/stats-service/api/v1/pages/main`:
-- `/stats-service/api/v1/pages/multichain/main`:
-- `/stats-service/api/v1/pages/transactions`:
-- `/stats-service/api/v1/update-status`:
+- `/stats-service/api/v1/counters`
+- `/stats-service/api/v1/lines`
+- `/stats-service/api/v1/lines/{name}`
+- `/stats-service/api/v1/pages/contracts`
+- `/stats-service/api/v1/pages/interchain/main`
+- `/stats-service/api/v1/pages/main`
+- `/stats-service/api/v1/pages/multichain/main`
+- `/stats-service/api/v1/pages/transactions`
+- `/stats-service/api/v1/update-status`
 
 ## [Configuration](blockscout-api/config.md)
 
+- `/api/v2/config/backend`: Returns non-secret backend environment variables in the snake case (e.g., chain_type).
 - `/api/v2/config/backend-version`: Returns application backend version string.
+- `/api/v2/config/db-background-migrations`: Returns list of background migrations that are not yet completed.
 - `/api/v2/config/indexer`: Returns config of indexer.
 - `/api/v2/config/public-metrics`: Returns update period / configuration for public metrics.
 - `/api/v2/config/smart-contracts/languages`: Returns list of smart contract languages supported by the database schema.
@@ -137,14 +139,34 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 - `/api/v2/withdrawals`: Retrieves a paginated list of withdrawals, typically for proof-of-stake networks supporting validator withdrawals.
 - `/api/v2/withdrawals/counters`: Returns total withdrawals count and sum from cache.
 
+## [Mud](blockscout-api/mud.md)
+
+- `/api/v2/mud/worlds`: Retrieves a paginated list of MUD worlds with basic stats.
+- `/api/v2/mud/worlds/count`: Retrieves the total number of known MUD worlds.
+- `/api/v2/mud/worlds/{world}/systems`: Retrieves a list of MUD systems registered in the specific MUD world.
+- `/api/v2/mud/worlds/{world}/systems/{system}`: Retrieves a list of MUD system ABI methods registered in the specific MUD world.
+- `/api/v2/mud/worlds/{world}/tables`: Retrieves a paginated list of MUD tables in the specific MUD world.
+- `/api/v2/mud/worlds/{world}/tables/count`: Retrieves the total number of known MUD tables in the specific MUD world.
+- `/api/v2/mud/worlds/{world}/tables/{table_id}/records`: Retrieves a paginated list of records in the specific MUD world table.
+- `/api/v2/mud/worlds/{world}/tables/{table_id}/records/count`: Retrieves the total number of records in the specific MUD world table.
+- `/api/v2/mud/worlds/{world}/tables/{table_id}/records/{record_id}`: Retrieves a single record in the specific MUD world table.
+
 ## [Optimism](blockscout-api/optimism.md)
 
 - `/api/v2/blocks/optimism-batch/{batch_number_param}`: Retrieves L2 blocks that are bound to a specific Optimism batch number.
-- `/api/v2/optimism/batches`: Get the latest committed batches for Optimism.
-- `/api/v2/optimism/batches/{batch_number}`: Get information for a specific Optimism batch.
-- `/api/v2/optimism/deposits`: Get L1 to L2 messages (deposits) for Optimism.
-- `/api/v2/optimism/games`: Get dispute games for Optimism.
-- `/api/v2/optimism/withdrawals`: Get L2 to L1 messages (withdrawals) for Optimism.
+- `/api/v2/main-page/optimism-deposits`: Retrieves a list of deposits for the main page.
+- `/api/v2/optimism/batches`: Retrieves a paginated list of batches.
+- `/api/v2/optimism/batches/count`: Retrieves a size of the batch list.
+- `/api/v2/optimism/batches/da/celestia/{height}/{commitment}`: Retrieves batch detailed info by the given celestia blob metadata (height and commitment).
+- `/api/v2/optimism/batches/{number}`: Retrieves batch detailed info by the given number.
+- `/api/v2/optimism/deposits`: Retrieves a paginated list of deposits.
+- `/api/v2/optimism/deposits/count`: Retrieves a size of the deposits list.
+- `/api/v2/optimism/games`: Retrieves a paginated list of games.
+- `/api/v2/optimism/games/count`: Retrieves a size of the games list.
+- `/api/v2/optimism/output-roots`: Retrieves a paginated list of output roots.
+- `/api/v2/optimism/output-roots/count`: Retrieves a size of the output roots list.
+- `/api/v2/optimism/withdrawals`: Retrieves a paginated list of withdrawals.
+- `/api/v2/optimism/withdrawals/count`: Retrieves a size of the withdrawals list.
 - `/api/v2/transactions/optimism-batch/{batch_number_param}`: Retrieves L2 transactions bound to a specific Optimism batch number.
 
 ## [Polygon zkEVM](blockscout-api/polygon-zkevm.md)
@@ -154,13 +176,6 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 - `/api/v2/zkevm/batches/{batch_number}`: Get information for a specific zkEVM batch.
 - `/api/v2/zkevm/deposits`: Get deposits for zkEVM.
 - `/api/v2/zkevm/withdrawals`: Get withdrawals for zkEVM.
-
-## [Redstone](blockscout-api/redstone.md)
-
-- `/api/v2/mud/worlds`: Get a list of MUD worlds for Redstone.
-- `/api/v2/mud/worlds/{contract_address}/tables`: Get tables for a specific MUD world on Redstone.
-- `/api/v2/mud/worlds/{contract_address}/tables/{table_id}/records`: Get records for a specific MUD world table on Redstone.
-- `/api/v2/mud/worlds/{contract_address}/tables/{table_id}/records/{record_id}`: Get a specific record from a MUD world table on Redstone.
 
 ## [Scroll](blockscout-api/scroll.md)
 

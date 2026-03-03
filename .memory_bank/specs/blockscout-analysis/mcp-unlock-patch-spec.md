@@ -62,8 +62,11 @@ blockscout-analysis/
 
 Build a set of **normalised paths** from the existing `blockscout-api-index.md`:
 
-1. Read every line of the form `- \`/path\`: ...` or `- /path: ...` (list items in the index).
-2. Extract the path (the portion between the backticks or after `- ` up to the first `:`).
+1. Read every list item that contains a path. Lines may have two forms:
+   - **With description:** `` - `/path`: description text ``
+   - **Without description:** `` - `/path` `` (no colon, no trailing text)
+   Both forms must be matched. The second form occurs when the generator writes endpoints that have no resolved description (e.g., stats-service endpoints whose swagger has no `description` or `summary` field).
+2. Extract the path (the backtick-wrapped portion starting with `/`).
 3. Normalise: replace every `{param_name}` segment with `{}`.
 
 This set represents all currently documented paths in a parameter-name-agnostic form.
@@ -90,12 +93,12 @@ Chain-specific endpoints are always routed by `chain_family`, regardless of path
 
 - Output filename: `chain_family` converted to lowercase with spaces and underscores replaced by hyphens, plus `.md`.
   - Example: `"Shibarium"` → `shibarium.md`; `"New Chain Name"` → `new-chain-name.md`
-- H3 heading: title-case of `chain_family` with hyphens and underscores replaced by spaces.
+- H3 heading: resolved by `heading_for()` from `common.py` — uses `CHAIN_FILE_CONFIG` overrides when available, otherwise auto-derives from filename via `filename.replace('.md', '').replace('-', ' ').title()`.
   - Example: `"Shibarium"` → `Shibarium`
 
 When a new `chain_family` appears in `unlock_blockchain_analysis` that is not listed in the special-case table below, the auto-derivation rule automatically produces a new output file — no changes to this specification or the script are needed.
 
-**Special-case configuration** (defined once at the top of the script; overrides auto-derivation for `chain_family` values whose human-readable name does not match the filename chosen by `api-file-generator.py`):
+**Special-case configuration** — the script defines a `CHAIN_FAMILY_MAP` at the top that overrides auto-derivation for `chain_family` values whose human-readable name does not match the filename chosen by `api-file-generator.py`. The heading overrides align with `CHAIN_FILE_CONFIG` in `common.py`:
 
 | `chain_family` | Filename override | Heading override |
 |---|---|---|
@@ -118,7 +121,7 @@ Common endpoints are routed by their `group` field using `COMMON_GROUP_MAP`, a c
 
 **Fallback for unknown `group` values:**
 
-If a `group` is not in `COMMON_GROUP_MAP`, classify by path prefix using the same prefix table as `api-file-generator-spec.md` Section 5.2 (longest-prefix-first matching on the path). If no prefix matches, print a warning identifying the endpoint and skip it.
+If a `group` is not in `COMMON_GROUP_MAP`, classify by calling `classify_endpoint()` from `common.py` on the path (after stripping the `/api` prefix to obtain the raw swagger path). This function applies the same 3-pass pipeline (chain prefix → chain keyword → topic prefix) used by `api-file-generator.py`. If no pass matches, print a warning identifying the endpoint and skip it.
 
 New `group` values that appear in future versions of `unlock_blockchain_analysis` are handled by this fallback without requiring updates to the specification. `COMMON_GROUP_MAP` should be extended only when the fallback produces incorrect results for a known group.
 
@@ -173,7 +176,7 @@ If the path contains no `{…}` placeholders, write `*None*` in the parameters s
 
 ### 7.5 Example Request
 
-Omit entirely. Path-only parameters with scalar types (`string`, `integer`) do not satisfy the condition for including an Example Request section (see `api-file-generator-spec.md` Section 8, which requires a parameter of type `object` or `array`).
+Omit entirely. Path-only parameters with scalar types (`string`, `integer`) do not satisfy the condition for including an Example Request section (see `api-file-generator-spec.md` Section 9, which requires a parameter of type `object` or `array`).
 
 ### 7.6 Full Entry Example
 
@@ -283,6 +286,7 @@ The deduplication check (Section 5.2) ensures that entries already present in th
 |---|---|---|
 | Python | ≥ 3.9 | Runtime |
 | requests | ≥ 2.20 | HTTP fetch for live MCP endpoint |
+| `common.py` | — | Shared classification tables and functions (see `api-file-generator-spec.md` Section 5) |
 
 Standard library modules used: `json`, `pathlib`, `re`, `sys`.
 
