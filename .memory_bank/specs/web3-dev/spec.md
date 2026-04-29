@@ -117,6 +117,29 @@ listed below.
 - Returns **explorer-enriched** data: indexed, decoded, structured —
   including token metadata, proxy implementations, internal transactions,
   and contract context.
+- **Wedge 1 — the introduction must mention `eth_call`.** The
+  top-of-file paragraphs of the skill body (the mental model the agent
+  forms in the first ~30 lines) must explicitly call out that, in
+  addition to the indexed REST surface, the PRO API also exposes
+  `eth_call` through its JSON-RPC gateway for **live or historical
+  contract state at a specific block** — historical `balanceOf(addr)`,
+  `totalSupply()` at a past block, view-function calls, contract
+  storage reads. The introduction must state explicitly that **no
+  separate RPC URL is required** — the same Bearer auth covers both
+  surfaces. Concrete content the body should reproduce:
+
+  > For data the explorer has **not** pre-indexed — most importantly
+  > **live or historical contract state at a specific block** (e.g.
+  > `balanceOf(addr)` against a token contract at block `N`,
+  > `totalSupply()` at a past block, any view-function call, contract
+  > storage reads) — the PRO API also exposes `eth_call` through its
+  > JSON-RPC gateway. The same Bearer-token auth covers both surfaces;
+  > you do **not** need a separate RPC endpoint for historical
+  > contract reads.
+
+  Rationale: without this early framing the agent forms a "REST-only"
+  mental model and reaches for an external RPC URL the moment a task
+  needs contract state.
 - Target use cases: dApps & wallets (transaction history, balances, NFTs),
   AI agents & bots (monitoring/automation), analytics platforms (cross-chain
   analysis), operational tooling (debugging, compliance).
@@ -243,6 +266,43 @@ present and in this order):
   it is git-ignored and warn the user if it is not.
 - Treat `HTTP 401`/`403` responses as a signal that the key is invalid or
   revoked: stop, surface the failure, and re-run the on-boarding flow.
+
+#### Required request headers (beyond auth)
+
+The skill body must include a section instructing the agent to set, on
+**every** PRO API request, both:
+
+- **`User-Agent`** — a meaningful, identifiable string for the app or
+  script (e.g. `<name>/<version>`).
+- **`Accept: application/json`**.
+
+The motivation is a real failure observed in practice: the PRO API is
+fronted by a CDN that may block requests whose default `User-Agent`
+looks like a bare HTTP-library client. The classic signature is **`curl`
+working while a script fails on the same URL**, and the failure mode
+varies by client — HTTP `403` with a Cloudflare HTML body containing
+`error code: 1010`, an empty body, or a connection reset.
+
+The skill body must:
+
+- Phrase the guidance **library-agnostic**, not Python-specific. Python
+  `urllib` is one example of a bare client whose default User-Agent
+  (`Python-urllib/3.x`) gets flagged, but the same issue appears with
+  generic Java `HttpURLConnection`, hand-rolled Go `net/http` without a
+  configured client, etc. Higher-level libraries (Python
+  `requests`/`httpx`, Node `fetch`/`undici`, OkHttp, hardened Go
+  clients, …) usually send a reasonable User-Agent by default — but
+  explicitly setting both headers is the recommended practice for
+  portability and CDN-tightening resilience.
+- Tell the agent that this failure is **not a credentials problem**.
+  Re-running the API-key on-boarding flow will not help; the request
+  never reached the API. The fix is the headers.
+- Add a row (or note) to the HTTP-error handling table for the CDN
+  edge-block case so the agent recognises it: `403` with a Cloudflare
+  `1010` body, or `curl`-works-but-script-fails, points at headers, not
+  auth.
+- Reference these headers in the "Putting it together" workflow's call
+  step so an agent following the workflow as a checklist sets them.
 
 #### Base URL and URL construction
 
@@ -380,6 +440,63 @@ The skill body must direct the agent to:
 - Use the path string from the index verbatim when querying the OpenAPI spec
   (`oastools` `-path` flag).
 
+#### B.1 Prefer a direct endpoint over a derived chain of calls
+
+The skill body must contain a **firm rule** (not a suggestion) that the
+agent always scans the full index for a single purpose-built endpoint
+**before writing any multi-step data-fetching logic**. The motivation is
+that the PRO API frequently exposes one endpoint that answers the
+question directly, replacing a chain of derived calls — which would
+otherwise waste credits, multiply latency, and introduce off-by-one
+bugs at each step.
+
+The skill body must include this concrete worked example so the rule is
+not abstract:
+
+- Question: *"Find the block number that was current at Unix timestamp T."*
+- Naive (must be flagged as wrong): binary-search
+  `GET /{chain_id}/api/v2/blocks/{block_hash_or_number_param}` against
+  block timestamps until convergence — dozens of calls and credits per
+  resolution.
+- Direct (must be flagged as the right approach): one call to the
+  purpose-built legacy endpoint:
+  ```
+  GET /{chain_id}/api/legacy/block/get-block-number-by-time
+  ```
+  In its Etherscan-compatible legacy form, this is invoked as:
+  ```
+  GET /{chain_id}/api?module=block&action=getblocknobytime&timestamp=<T>&closest=before
+  ```
+
+The skill body must then generalise the lesson: whenever a request
+decomposes into "fetch X, derive Y, aggregate Z", scan the index
+broadly (including `legacy`) for an endpoint that returns Y or Z
+directly; only fall back to a derived approach when no direct endpoint
+exists.
+
+#### B.2 Wedge 2 — Index-limits bridge: route contract-state requests to `eth_call`
+
+The "always scan the index" rule (sections B and B.1) implicitly hides
+the `eth_call` gateway: it is not in the index, so an agent obeying
+that rule literally has nowhere to find it during endpoint discovery.
+The skill body must add a bridge **inside the Endpoint discovery
+section** that closes the gap **before** the agent could declare "no
+match in the index" and **before** it could reach for an external RPC
+URL.
+
+The bridge must be placed immediately after the "scan the index" rule
+(not later in the file) so the agent encounters it at the point of
+decision. Concrete content the body should reproduce:
+
+> **Index limits — recognise contract-state requests.** The index
+> lists endpoints that return explorer-indexed data. It will **not**
+> contain an endpoint for arbitrary contract state at a specific
+> block — historical `balanceOf`, `totalSupply`, view-function calls,
+> contract storage reads. Those go through `eth_call` on the JSON-RPC
+> gateway — same Bearer auth, same credit accounting. Recognise this
+> case **before** declaring "no match in the index" and **before**
+> considering an external RPC URL: there is no need for one.
+
 ### C. Endpoint detail lookup — `references/pro-api.json` via `oastools`
 
 The OpenAPI document is large (~24,000 lines). **The skill body must instruct
@@ -449,6 +566,48 @@ substitute the correct relative path to `pro-api.json`.
 4. Inspect the full schema tree only when the task genuinely requires it
    (e.g. building a typed client model).
 
+### C.0 Reading contract state — `eth_call` via the JSON-RPC gateway
+
+The skill body must include a short section noting that, while the
+PRO API OpenAPI spec does not define contract-read methods, **`eth_call`
+is available** through the PRO API's JSON-RPC gateway at:
+
+```
+POST https://api.blockscout.com/{chain_id}/json-rpc
+```
+
+The skill body must:
+
+- State that the gateway uses the **same `Authorization: Bearer …`
+  header** as every other PRO API call — credit accounting, rate
+  limits, and key handling apply identically.
+- Include one minimal `curl` example showing an `eth_call` request body.
+- **Mention only `eth_call`.** Do not list, advertise, or illustrate any
+  other JSON-RPC method (`eth_getBalance`, `eth_getLogs`,
+  `eth_getTransactionByHash`, …) — naming them would compete with the
+  REST endpoints from the index that already cover that data more
+  efficiently.
+- Explicitly steer the agent back to the indexed REST endpoints for any
+  data the explorer has already indexed (balances, token holdings,
+  transactions, logs, decoded events, contract metadata, NFT
+  inventories, account abstraction objects, …) — the indexed REST path
+  is invariably more efficient than synthesising the same data from
+  RPC primitives.
+
+The `eth_call` surface must be surfaced in three other places besides
+this section, to prevent an agent from reading C.0 in isolation and
+still skipping the gateway when planning a task. Those three structural
+wedges live with the sections they modify:
+
+- **Wedge 1 — introduction mention** → see section A,
+  "What the PRO API is".
+- **Wedge 2 — index-limits bridge** → see section B.2.
+- **Wedge 3 — workflow routing fork** → see section D.1.
+
+A regeneration that implements C.0 alone, without those three wedges,
+will reproduce the observed failure mode in which an agent suggested
+introducing an external `ETH_RPC_URL` for a historical-balance task.
+
 ### C.1 Pagination
 
 The skill body must include a short section on pagination. The PRO API
@@ -508,6 +667,50 @@ The skill body must show, at minimum:
 - A reminder to read `x-credits-remaining` from every response and surface it
   to the user when relevant (e.g. when running scripts that issue many
   calls).
+
+#### D.1 Wedge 3 — "Putting it together" workflow recap with a routing fork
+
+The skill body must close with a numbered workflow recap that an agent
+can use as a checklist. The recap exists to surface every critical
+decision at the point the agent makes it; without one, an agent may
+read the file as a reference but never re-derive the sequence when
+planning a task.
+
+The recap must include, in order:
+
+1. API key pre-flight (section A's registration rules).
+2. Chain ID resolution (section D, `/api/json/config`).
+3. **Routing fork — explorer-indexed data vs. contract state at a
+   block.** This step is non-negotiable. It must explicitly ask
+   whether the data need is for explorer-indexed data
+   (transactions / balances / logs / blocks / tokens / NFTs / decoded
+   events / contract metadata / account abstraction objects, …) — in
+   which case the agent uses a REST endpoint from
+   `references/pro-api-index.md` — or for **live or historical
+   contract state at a specific block** (`balanceOf(addr)` at block
+   `N`, `totalSupply()` at a past block, view-function calls, contract
+   storage reads), in which case the agent uses `eth_call` via the
+   JSON-RPC gateway. The step must instruct the agent **not** to
+   introduce a separate RPC endpoint for the contract-state branch —
+   the gateway is part of the PRO API and uses the same Bearer auth.
+4. Endpoint lookup in `pro-api-index.md` (REST branch).
+5. Parameter and response inspection via `oastools` (REST branch).
+6. Call construction with the Bearer header, the
+   [Required request headers](#required-request-headers-beyond-auth)
+   (`User-Agent`, `Accept: application/json`), and reading
+   `x-credits-remaining` from the response.
+7. `eth_call` step: `POST` to
+   `https://api.blockscout.com/{chain_id}/json-rpc` with the same
+   Bearer auth and a JSON-RPC body (contract-state branch).
+8. Long-running / batch concerns (rate-limit throttling, credit
+   accounting, stop conditions).
+
+The fork at step 3 is the single most important wedge: it ensures
+that an agent following the workflow as a checklist cannot miss the
+indexed-vs-contract-state choice. Without it, the workflow becomes
+REST-only, and the `eth_call` surface gets detached from the planning
+loop — which is exactly how the observed failure (an agent suggesting
+an external `ETH_RPC_URL` for a historical-balance task) happened.
 
 ---
 

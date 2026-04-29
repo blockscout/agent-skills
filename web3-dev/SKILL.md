@@ -11,6 +11,8 @@ This skill teaches the agent how to build software (apps, scripts, CLIs, bots, m
 
 The PRO API returns explorer-enriched data: indexed, decoded, and structured — token metadata, proxy implementations, internal transactions, contract context, and so on. Use it for dApps and wallets, AI agents and bots, analytics platforms, and operational tooling.
 
+For data the explorer has **not** pre-indexed — most importantly **live or historical contract state at a specific block** (e.g. `balanceOf(addr)` against a token contract at block `N`, `totalSupply()` at a past block, any view-function call, contract storage reads) — the PRO API also exposes `eth_call` through its JSON-RPC gateway. See [Reading contract state](#reading-contract-state--eth_call-via-the-json-rpc-gateway). The same Bearer-token auth covers both surfaces; you do **not** need a separate RPC endpoint for historical contract reads.
+
 The bundled files in `references/` are the **single source of truth** for which endpoints exist and how to call them:
 
 | File | Purpose |
@@ -102,6 +104,12 @@ Hard rules:
 - **Always** authenticate with `Authorization: Bearer proapi_…`. This is the only authentication scheme the skill uses.
 - Never log the key, never embed it in a code snippet committed to a repo, never echo it back. Read it at runtime from an environment variable or equivalent secret store and reference it by variable name.
 
+## Required request headers (beyond auth)
+
+The PRO API is CDN-fronted. On every request, set `User-Agent: <name>/<version>` (e.g. `my-wallet-app/1.4.2`) and `Accept: application/json`. Bare HTTP-library defaults — Python `urllib`'s `Python-urllib/3.x`, plain Java `HttpURLConnection`, ad-hoc Go `net/http` without a configured client, etc. — can be blocked at the CDN edge; higher-level clients (`requests`, `httpx`, `fetch`, `undici`, OkHttp, …) usually pass, but setting both headers explicitly is portable and CDN-resilient.
+
+If `curl` works but a script gets `403` (often with a Cloudflare `1010` page in the body, sometimes an empty body or a reset) on the same URL, the request never reached the API — it is a header issue, not a credentials one. Re-running the on-boarding flow will not help.
+
 ## Endpoint discovery — `references/pro-api-index.md`
 
 The index groups every endpoint by its OpenAPI tag (`addresses`, `blocks`, `transactions`, `tokens`, chain-specific groups like `optimism`/`arbitrum`/`zkevm`, `legacy`, etc.). Each entry has the form:
@@ -117,16 +125,25 @@ Workflow:
 
 Every endpoint listed in the index is callable and uses the same auth scheme — including endpoints under the `legacy` tag. Do not steer the user toward or away from any subset based on tag name; pick the endpoint whose description matches the data need.
 
-When the one-line index summaries are not enough to pick a single endpoint — for example, several entries look plausible, or none does on a first pass — **shortlist a handful of candidates and read their full operation descriptions** before giving up. The full description in the OpenAPI spec is often more specific than the one-line index summary (it spells out which inputs are accepted, which response fields are populated, which chain types it applies to, etc.), and that extra detail is usually what disambiguates similar-looking endpoints.
+### Prefer a direct endpoint over a derived chain of calls
 
-Use `oastools walk operations` to fetch the full description of each candidate (the command is in [Endpoint detail lookup](#endpoint-detail-lookup-pro-apijson-via-oastools) below):
+Before writing multi-step data-fetching logic, **scan the index (legacy entries included) for a single purpose-built endpoint** that answers the question directly. This is a firm rule — chaining derived calls when a direct endpoint exists wastes credits, multiplies latency, and invites off-by-one bugs.
+
+Example: to resolve a Unix timestamp `T` to a block number, do **not** binary-search `/api/v2/blocks/{block_hash_or_number_param}`. The index already has a purpose-built endpoint:
 
 ```
-oastools walk operations -detail -format json -path '<PATH>' references/pro-api.json \
-  | jq '.operation.description'
+GET /{chain_id}/api/legacy/block/get-block-number-by-time
+# Etherscan-compatible form:
+GET /{chain_id}/api?module=block&action=getblocknobytime&timestamp=<T>&closest=before
 ```
 
-Only after reading the full descriptions of plausible candidates and finding that none of them fits should you surface that to the user — and even then, do not silently substitute a third-party data source.
+Generalise: when a request decomposes into "fetch X, derive Y, aggregate Z", look for an endpoint that returns Y or Z directly before chaining.
+
+**Index limits — recognise contract-state requests.** The index lists endpoints that return explorer-indexed data. It will **not** contain an endpoint for arbitrary contract state at a specific block — historical `balanceOf`, `totalSupply`, view-function calls, contract storage reads. Those go through `eth_call` on the [JSON-RPC gateway](#reading-contract-state--eth_call-via-the-json-rpc-gateway) — same Bearer auth, same credit accounting. Recognise this case **before** declaring "no match in the index" and **before** considering an external RPC URL: there is no need for one.
+
+### Disambiguating candidates with full descriptions
+
+When index one-liners are ambiguous, shortlist plausible candidates and read their full operation descriptions before giving up — the OpenAPI description usually spells out accepted inputs, populated response fields, and chain-type applicability that the index summary omits. Use the `oastools walk operations` command from [Endpoint detail lookup](#endpoint-detail-lookup-pro-apijson-via-oastools). Only after that step is exhausted should you surface a no-match to the user — and even then, do not silently substitute a third-party data source.
 
 ## Endpoint detail lookup — `references/pro-api.json` via `oastools`
 
@@ -212,6 +229,33 @@ Every PRO API response carries an **`x-credits-remaining`** response header that
 - **Read `x-credits-remaining` from each response.** Surface it to the user when it crosses meaningful thresholds — for example, when the remaining credits are no longer enough to cover the rest of a planned batch, or after a long-running job to confirm what was consumed.
 - **Treat zero or rapidly-falling `x-credits-remaining` as a stop condition for batch scripts.** Better to stop cleanly with a clear message than to issue calls that will start failing once the daily allowance is exhausted.
 
+## Reading contract state — `eth_call` via the JSON-RPC gateway
+
+The PRO API's OpenAPI spec covers data the explorer has already indexed; it does not define contract-read methods. To read live contract state, the PRO API exposes a JSON-RPC gateway at:
+
+```
+POST https://api.blockscout.com/{chain_id}/json-rpc
+```
+
+`eth_call` is available through this gateway and uses the **same `Authorization: Bearer …` header** as every other PRO API call — credit accounting, rate limits, and key handling all apply identically.
+
+Example:
+
+```
+curl --request POST \
+  --url 'https://api.blockscout.com/1/json-rpc' \
+  --header "Authorization: Bearer ${BLOCKSCOUT_PRO_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"eth_call",
+    "params":[{"to":"0x…","data":"0x…"}, "latest"]
+  }'
+```
+
+For any data the explorer has already indexed — balances, token holdings, transactions, logs, decoded events, contract metadata, NFT inventories, account abstraction objects, etc. — use the corresponding REST endpoint from the index. The indexed REST path is invariably more efficient than synthesising the same data from RPC primitives.
+
 ## Pagination
 
 Many list endpoints in the PRO API are paginated — `transactions`, `logs`, `token-transfers`, `holders`, NFT inventories, block lists, and similar endpoints commonly return one page at a time. The OpenAPI spec is authoritative on the exact cursor mechanism for each endpoint; do not assume a single call returns everything.
@@ -263,7 +307,8 @@ Per-plan **RPS limits** apply (see `/api/json/plans`). Scripts must throttle acc
 | Status | Meaning | Handling |
 |--------|---------|----------|
 | `200` | Success | Read body and `x-credits-remaining` header. |
-| `401` / `403` | Invalid or missing API key | Stop. Surface clearly. Do not retry. Re-run the on-boarding flow. |
+| `401` / `403` (PRO API JSON body) | Invalid or missing API key | Stop. Surface clearly. Do not retry. Re-run the on-boarding flow. |
+| `403` (Cloudflare HTML body, `error code: 1010`, or `curl`-works-but-script-fails) | CDN edge block — request never reached the API | Set [`User-Agent` and `Accept` headers](#required-request-headers-beyond-auth). Not an auth issue. |
 | `402` (or body indicating credit exhaustion) | Daily credit allowance exceeded | Stop and report. Suggest upgrading the plan or waiting for the daily reset. |
 | `429` | Rate-limited | Back off with exponential delay and retry — do not retry tightly in a loop. |
 | `5xx` | Transient server error | Retry with backoff, capped attempts. |
@@ -274,8 +319,11 @@ For each new data need the user describes:
 
 1. **Pre-flight the API key** if this is the first PRO API call in the session (see [API key — mandatory pre-flight](#api-key--mandatory-pre-flight)).
 2. **Resolve the target chain ID** if the user named a chain by symbol/name — query `/api/json/config`.
-3. **Find the endpoint** in `references/pro-api-index.md`. Copy the path string verbatim.
-4. **Inspect the endpoint's parameters** with `oastools walk parameters`. Build the URL by concatenating `https://api.blockscout.com` with the path string and substituting `{templated}` segments.
-5. **Inspect the response schema only as deep as the task needs.** Use `oastools walk responses` for the top-level shape, then follow specific `$ref`s with `oastools walk schemas -name <SCHEMA_NAME>` for the fields you actually consume.
-6. **Call the endpoint** with `Authorization: Bearer ${BLOCKSCOUT_PRO_API_KEY}` and any required query parameters. Read `x-credits-remaining` from the response.
-7. **For long-running or batch work**, surface `x-credits-remaining` to the user at meaningful checkpoints, throttle to stay under the plan's RPS limit, and stop cleanly when credits run low.
+3. **Route the request.** Decide which surface answers the data need:
+   - **Explorer-indexed data** (transactions, balances, blocks, logs, tokens, NFTs, decoded events, contract metadata, account abstraction objects, …) → REST endpoint from `references/pro-api-index.md`. Continue with steps 4–6.
+   - **Live or historical contract state at a specific block** (`balanceOf(addr)` at block `N`, `totalSupply()` at a past block, any view function, contract storage reads) → `eth_call` via the [JSON-RPC gateway](#reading-contract-state--eth_call-via-the-json-rpc-gateway). Skip to step 7. Do **not** introduce a separate RPC endpoint — the gateway is part of the PRO API and uses the same Bearer auth.
+4. **Find the REST endpoint** in `references/pro-api-index.md`. Copy the path string verbatim.
+5. **Inspect the endpoint's parameters** with `oastools walk parameters`. Build the URL by concatenating `https://api.blockscout.com` with the path string and substituting `{templated}` segments. **Inspect the response schema only as deep as the task needs** — use `oastools walk responses` for the top-level shape, then follow specific `$ref`s with `oastools walk schemas -name <SCHEMA_NAME>` for the fields you actually consume.
+6. **Call the endpoint** with `Authorization: Bearer ${BLOCKSCOUT_PRO_API_KEY}`, a meaningful `User-Agent`, `Accept: application/json` (see [Required request headers](#required-request-headers-beyond-auth)), and any required query parameters. Read `x-credits-remaining` from the response.
+7. **For `eth_call` requests:** `POST` to `https://api.blockscout.com/{chain_id}/json-rpc` with the same Bearer auth and a JSON-RPC body — see [Reading contract state](#reading-contract-state--eth_call-via-the-json-rpc-gateway).
+8. **For long-running or batch work**, surface `x-credits-remaining` to the user at meaningful checkpoints, throttle to stay under the plan's RPS limit, and stop cleanly when credits run low.
