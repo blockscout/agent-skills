@@ -31,12 +31,24 @@ A PRO API key is **required** for every PRO API call. Run the following pre-flig
 1. Look for a key in the agent's environment, in this order of preference:
    - An exported environment variable, default name `BLOCKSCOUT_PRO_API_KEY`.
    - A project-local secrets file appropriate to the artefact: `.env` for Node/Python apps, `.env.local` for Next.js, `local.properties` for Android, `*.xcconfig` or Keychain for iOS, `secrets.toml` for some Python frameworks, a CI secret store, etc.
-   - A key the user explicitly pasted into the conversation in this session.
    - A key the user previously placed in the agent's stored memory or persistent profile (e.g. a saved-secrets/preferences store the agent has access to across sessions).
+
+   **Do not ask the user to paste the key into the conversation.** A pasted value lands in the LLM transcript and can leak via provider logs, exported chats, screenshots, or training corpora. Steer the user to `export` or a gitignored `.env` instead (see step 5).
 2. **Never invent or guess a key.** If the agent has no record of one, do not fabricate one or pull one from training data.
-3. **Confirm before reusing a key from stored memory or a prior session.** A key the user has intentionally saved is a legitimate source — but reusing it silently is not. Before issuing the first request with such a key, show the user *which* stored key the agent intends to use (e.g. "the key saved as `BLOCKSCOUT_PRO_API_KEY` in your agent profile, last 4 chars `…abcd`") and ask them to confirm. Never echo the full key value back. Keys found in the current session's environment, project secrets file, or pasted directly into the current conversation do not need this extra confirmation step — they are by construction intentional for the current task.
+3. **Confirm before reusing a key from stored memory or a prior session.** A key the user has intentionally saved is a legitimate source — but reusing it silently is not. Before issuing the first request with such a key, show the user *which* stored key the agent intends to use (e.g. "the key saved as `BLOCKSCOUT_PRO_API_KEY` in your agent profile, last 4 chars `…abcd`") and ask them to confirm. Never echo the full key value back. Keys found in the current session's environment or project secrets file do not need this extra confirmation step — they are by construction intentional for the current task.
 4. If a key is found (and confirmed where required by step 3), validate loosely — it should start with `proapi_` — and proceed.
-5. If no key is found anywhere, **stop**. Do not attempt any PRO API request, do not proceed with partial work, do not propose alternative data sources. Deliver the on-boarding instructions below and wait for the user.
+5. If no key is found anywhere, **stop and hand control back to the user immediately.** This is a hard interrupt, not a soft warning. Specifically, the agent must not:
+   - write or sketch code that calls (or will eventually call) the PRO API;
+   - "prepare a script for when the key arrives" or do any preparatory endpoint inspection / parameter walk;
+   - propose alternative data sources or an external RPC URL as a stopgap;
+   - narrate hypothetical next steps as if the key situation were resolved.
+
+   The reason this is a hard interrupt — not just discipline — is that **the agent needs the key for its own research and debug calls**, not only for the user's eventual code. Probing an endpoint to confirm its real response shape, validating a parameter combination by trying it, and debugging why a previous call returned unexpected data are all live PRO API calls the agent makes during planning and iteration. Without a key, the agent cannot do that exploratory work, which means it cannot reliably design the user's code in the first place. "Build the script now, run it later when the key arrives" therefore produces code that was never validated against the actual API.
+
+   Send a brief message that (a) names the missing key, (b) points the user at **https://dev.blockscout.com** (free tier, no credit card), and (c) offers two paste-free paths: `export BLOCKSCOUT_PRO_API_KEY=proapi_…` in the current shell, or a gitignored `.env` in the project root. **Do not ask the user to paste the key into the conversation** — that puts the value in the LLM transcript. Then wait.
+
+   - ❌ Wrong: *"No API key found in environment. Let me check the endpoint parameters and build the script — it'll use the Blockscout PRO API for token transfers (when a key is available)."*
+   - ✅ Right: *"I couldn't find a Blockscout PRO API key. Generate one at https://dev.blockscout.com (free tier, no credit card), then either run `export BLOCKSCOUT_PRO_API_KEY=proapi_…` in this shell, or add it to a gitignored `.env` in the project root. The value won't appear in our conversation either way. Tell me when you're done."*
 
 ### On-boarding instructions when the key is missing
 
@@ -64,6 +76,7 @@ These rules apply for the rest of the session and for every code sample the skil
 - Always read the key indirectly at runtime — environment variable, secrets file, or secret manager. Do not hardcode it in scripts or examples; reference it by variable name only (e.g. `process.env.BLOCKSCOUT_PRO_API_KEY`, `os.environ["BLOCKSCOUT_PRO_API_KEY"]`).
 - If a `.env` (or equivalent secrets file) is created or modified, ensure the file is git-ignored and warn the user if it is not.
 - Treat `HTTP 401`/`403` responses as a signal that the key is invalid, missing, or revoked — stop, surface the failure to the user, and re-run the on-boarding flow above.
+- If the user pastes a key into the conversation despite the advice not to, accept it for the current session, but warn them that the value is now in the transcript and recommend they rotate the key after the session and use `export`/`.env` next time.
 
 ## Base URL and URL construction
 

@@ -192,11 +192,18 @@ this as a hard pre-flight check before issuing any HTTP request.
      (e.g. `.env` for Node/Python apps, `.env.local` for Next.js,
      `local.properties` for Android, `*.xcconfig` / Keychain for iOS,
      `secrets.toml` for some Python frameworks, a CI secret store, etc.).
-   - A key the user has explicitly pasted into the conversation in this
-     session.
    - A key the user previously placed in the agent's stored memory or
      persistent profile (e.g. a saved-secrets / preferences store the
      agent has access to across sessions).
+
+   **Conversation paste is NOT an acceptable source and the skill body
+   must not solicit it.** A pasted value lands in the LLM transcript and
+   can leak via provider logs, exported chats, screenshots, or training
+   corpora. The skill body must steer the user to `export` or a
+   gitignored `.env` instead, and must include a key-handling rule that
+   accepts an unsolicited paste *for the current session only*, warns
+   the user that the value is now in the transcript, and recommends
+   rotating the key plus using `export`/`.env` thereafter.
 
    The skill must **never invent or guess a key**, and must **never use a
    key from training data or any source other than those listed above**.
@@ -207,15 +214,75 @@ this as a hard pre-flight check before issuing any HTTP request.
    such a key, to surface *which* stored key it intends to use — by
    slot/name and a non-secret hint such as the last 4 characters — and
    ask the user to confirm. The full key value must never be echoed back
-   to the user. Keys found in the current session's environment, in a
-   project-local secrets file, or pasted directly into the current
-   conversation do **not** require this extra confirmation step — they
-   are by construction intentional for the current task.
+   to the user. Keys found in the current session's environment or in a
+   project-local secrets file do **not** require this extra confirmation
+   step — they are by construction intentional for the current task.
 3. If the key is **not** available from any of the sources above, the
-   skill must **stop** — do not attempt any PRO API request, do not
-   proceed with partial work, do not offer alternative data sources.
-   Instead, emit the on-boarding instructions below and wait for the
-   user to supply a key.
+   skill must enforce a **hard interrupt** — not a soft warning. The
+   skill body must explicitly forbid every form of preparatory or
+   "deferred" work, because an observed failure mode is the agent
+   rationalising that *writing code* is not *making a request*. The
+   forbidden behaviours that the skill body must enumerate are:
+
+   - writing or sketching code that calls (or will eventually call) the
+     PRO API;
+   - "preparing a script for when the key arrives" or doing any
+     preparatory endpoint inspection / parameter walk / response-schema
+     traversal;
+   - proposing an alternative data source or an external RPC URL as a
+     stopgap;
+   - narrating hypothetical next steps as if the key situation were
+     resolved.
+
+   Instead, the agent must send a brief, concrete message that:
+   (a) names the missing key, (b) points the user at the Blockscout
+   developer portal at **https://dev.blockscout.com** (free tier, no
+   credit card), and (c) offers two **paste-free** paths:
+   `export BLOCKSCOUT_PRO_API_KEY=proapi_…` in the current shell, or
+   a gitignored `.env` in the project root. The skill body must **not**
+   ask the user to paste the key into the conversation (see rule 1's
+   note on conversation-paste exposure). The agent then waits.
+
+   The skill body must include both an **anti-pattern example** (the
+   wrong shape) and a **canonical example** (the right shape), because
+   without a concrete contrast the agent invents its own response and
+   tends to hedge. Reproduce these verbatim or close to it:
+
+   > ❌ Wrong: *"No API key found in environment. Let me check the
+   > endpoint parameters and build the script — it'll use the
+   > Blockscout PRO API for token transfers (when a key is
+   > available)."*
+   >
+   > ✅ Right: *"I couldn't find a Blockscout PRO API key. Generate
+   > one at https://dev.blockscout.com (free tier, no credit card),
+   > then either run `export BLOCKSCOUT_PRO_API_KEY=proapi_…` in this
+   > shell, or add it to a gitignored `.env` in the project root. The
+   > value won't appear in our conversation either way. Tell me when
+   > you're done."*
+
+   The skill body must also state the **stronger underlying reason**
+   the stop is hard, not just discipline: **the agent needs the key
+   for its own research and debug calls**, not only for the user's
+   eventual code. Probing an endpoint to confirm its real response
+   shape, validating a parameter combination by trying it, and
+   debugging why an earlier call returned unexpected data are all live
+   PRO API calls the agent makes during planning and iteration.
+   Without a key, the agent cannot do that exploratory work — meaning
+   it cannot reliably design the user's code in the first place.
+   "Build the script now, run it later when the key arrives" therefore
+   produces code that was never validated against the actual API. The
+   skill body should make this point explicitly so the agent has a
+   concrete reason to stop, not only a rule to follow.
+
+   Rationale: the previous wording ("stop — do not attempt any PRO API
+   request, do not proceed with partial work") was too easy for an
+   agent to read narrowly as "do not issue an HTTP call now", while
+   continuing to write code in the meantime. Forbidding preparatory
+   work explicitly, surfacing the developer-portal URL inline in the
+   stop rule (not only in the separate on-boarding subsection),
+   anchoring with both an anti-pattern and a canonical example, **and
+   stating the agent's own loss of research / debug capability** are
+   the four changes that close that gap.
 4. If the key **is** available (and confirmed where required by rule 2),
    validate it loosely (it should start with `proapi_`) and proceed.
 
