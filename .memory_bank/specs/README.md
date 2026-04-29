@@ -6,22 +6,29 @@ This directory contains specifications for the agent skills in this repository. 
 
 ```
 specs/
-└── blockscout-analysis/
+├── blockscout-analysis/
+│   ├── spec.md                             # Main skill spec (start here)
+│   ├── api-file-generator-spec.md          # API reference file generator tool spec
+│   ├── api-format-spec.md                  # API reference file format spec
+│   ├── blockscout-api-composition-spec.md  # Pipeline to produce Blockscout API reference files
+│   ├── chainscout-api-spec.md              # Specification for Chainscout API reference file
+│   ├── mcp-duplicate-removal-spec.md       # Specification for removing MCP tool duplicate endpoints from API reference files
+│   ├── mcp-unlock-patch-spec.md            # Specification for patching Blockscout API reference files from unlock_blockchain_analysis MCP tool
+│   ├── marketplace-plugin-spec.md          # Specification for Claude Code marketplace plugin entry
+│   ├── rpc-api-patch-spec.md               # Specification for patching Blockscout API reference files with JSON-RPC endpoints
+│   ├── swagger-main-indexer-spec.md        # Specification for indexing the main Blockscout swagger
+│   ├── swagger-stats-indexer-spec.md       # Specification for indexing the stats Blockscout swagger
+│   └── tools/                              # Supporting scripts used during skill preparation
+│       ├── common.py                       # Shared utilities for the tools
+│       ├── api-file-generator.py           # Generates API reference files from indexed data
+│       ├── mcp-unlock-patch.py             # Patches Blockscout API reference files with unlock_blockchain_analysis MCP tool endpoints
+│       ├── swagger-main-indexer.py         # Indexes the main Blockscout swagger
+│       └── swagger-stats-indexer.py        # Indexes the Stats service swagger
+└── web3-dev/
     ├── spec.md                             # Main skill spec (start here)
-    ├── api-file-generator-spec.md          # API reference file generator tool spec
-    ├── api-format-spec.md                  # API reference file format spec
-    ├── blockscout-api-composition-spec.md  # Pipeline to produce Blockscout API reference files 
-    ├── chainscout-api-spec.md              # Specification for Chainscout API reference file
-    ├── mcp-duplicate-removal-spec.md       # Specification for removing MCP tool duplicate endpoints from API reference files
-    ├── mcp-unlock-patch-spec.md            # Specification for patching Blockscout API reference files from unlock_blockchain_analysis MCP tool
-    ├── marketplace-plugin-spec.md          # Specification for Claude Code marketplace plugin entry
-    ├── rpc-api-patch-spec.md               # Specification for patching Blockscout API reference files with JSON-RPC endpoints
-    ├── swagger-main-indexer-spec.md        # Specification for indexing the main Blockscout swagger
-    ├── swagger-stats-indexer-spec.md       # Specification for indexing the stats Blockscout swagger
+    ├── pro-api-indexer-spec.md             # Specification for the PRO API endpoint indexer
+    ├── references/
+    │   └── pro-api/                        # Git submodule with the Blockscout PRO API source (used to build pro-api.json)
     └── tools/                              # Supporting scripts used during skill preparation
-        ├── common.py                       # Shared utilities for the tools
-        ├── api-file-generator.py           # Generates API reference files from indexed data
-        ├── mcp-unlock-patch.py             # Patches Blockscout API reference files with unlock_blockchain_analysis MCP tool endpoints
-        ├── swagger-main-indexer.py         # Indexes the main Blockscout swagger
-        └── swagger-stats-indexer.py        # Indexes the Stats service swagger
+        └── pro-api-indexer.py              # Generates the PRO API endpoint markdown index from pro-api.json
 ```

@@ -9,7 +9,8 @@ Persistent project knowledge for AI agents working on this repository.
 ├── README.md                               # This file
 └── specs/                                  # Skill specifications
     ├── README.md
-    └── blockscout-analysis/                # Specs and tools for the blockscout-analysis skill
+    ├── blockscout-analysis/                # Specs and tools for the blockscout-analysis skill
+    └── web3-dev/                           # Specs and tools for the web3-dev skill
 ```
 
 ## Contents
