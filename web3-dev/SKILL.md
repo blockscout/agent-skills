@@ -242,6 +242,13 @@ Every PRO API response carries an **`x-credits-remaining`** response header that
 - **Read `x-credits-remaining` from each response.** Surface it to the user when it crosses meaningful thresholds — for example, when the remaining credits are no longer enough to cover the rest of a planned batch, or after a long-running job to confirm what was consumed.
 - **Treat zero or rapidly-falling `x-credits-remaining` as a stop condition for batch scripts.** Better to stop cleanly with a clear message than to issue calls that will start failing once the daily allowance is exhausted.
 
+## Handling response verbosity
+
+PRO API responses are explorer-enriched and can be hundreds of KB — a single transaction's logs, an enriched address page, a paginated list of token transfers. **Dumping a raw response into the agent's reading will exhaust the context window**, so apply the same "never read whole, project narrowly" discipline you apply to `pro-api.json`. Two recipes:
+
+- **You know what you need** → pipe `curl` through `jq` with the smallest projection that satisfies the task: `curl … | jq '{n: .height, t: .timestamp}'`. Drop heavy fields you don't need (decoded calldata, NFT metadata, raw input bytes).
+- **You're exploring or debugging an unfamiliar response** → first inspect the *schema* with `oastools walk responses` (zero credits, bounded), or save the response to disk with `curl -o /tmp/r.json` and probe it with `wc -c r.json`, `jq 'keys'`, `jq '.items[0] | keys'`, or `head -c 1000` — never `cat` the file or read it whole. Saving to disk lets you re-probe without re-fetching, but the budget rule is unchanged: only narrow projections reach the conversation.
+
 ## Reading contract state — `eth_call` via the JSON-RPC gateway
 
 The PRO API's OpenAPI spec covers data the explorer has already indexed; it does not define contract-read methods. To read live contract state, the PRO API exposes a JSON-RPC gateway at:
@@ -337,6 +344,6 @@ For each new data need the user describes:
    - **Live or historical contract state at a specific block** (`balanceOf(addr)` at block `N`, `totalSupply()` at a past block, any view function, contract storage reads) → `eth_call` via the [JSON-RPC gateway](#reading-contract-state--eth_call-via-the-json-rpc-gateway). Skip to step 7. Do **not** introduce a separate RPC endpoint — the gateway is part of the PRO API and uses the same Bearer auth.
 4. **Find the REST endpoint** in `references/pro-api-index.md`. Copy the path string verbatim.
 5. **Inspect the endpoint's parameters** with `oastools walk parameters`. Build the URL by concatenating `https://api.blockscout.com` with the path string and substituting `{templated}` segments. **Inspect the response schema only as deep as the task needs** — use `oastools walk responses` for the top-level shape, then follow specific `$ref`s with `oastools walk schemas -name <SCHEMA_NAME>` for the fields you actually consume.
-6. **Call the endpoint** with `Authorization: Bearer ${BLOCKSCOUT_PRO_API_KEY}`, a meaningful `User-Agent`, `Accept: application/json` (see [Required request headers](#required-request-headers-beyond-auth)), and any required query parameters. Read `x-credits-remaining` from the response.
+6. **Call the endpoint** with `Authorization: Bearer ${BLOCKSCOUT_PRO_API_KEY}`, a meaningful `User-Agent`, `Accept: application/json` (see [Required request headers](#required-request-headers-beyond-auth)), and any required query parameters. Read `x-credits-remaining` from the response and **project the body narrowly** (see [Handling response verbosity](#handling-response-verbosity)) — do not dump it whole.
 7. **For `eth_call` requests:** `POST` to `https://api.blockscout.com/{chain_id}/json-rpc` with the same Bearer auth and a JSON-RPC body — see [Reading contract state](#reading-contract-state--eth_call-via-the-json-rpc-gateway).
 8. **For long-running or batch work**, surface `x-credits-remaining` to the user at meaningful checkpoints, throttle to stay under the plan's RPS limit, and stop cleanly when credits run low.

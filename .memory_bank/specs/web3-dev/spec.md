@@ -735,6 +735,52 @@ The skill body must show, at minimum:
   to the user when relevant (e.g. when running scripts that issue many
   calls).
 
+#### D.0 Handling response verbosity
+
+The skill body must include a short section on **response verbosity**.
+PRO API responses are explorer-enriched and can be hundreds of KB —
+the failure mode is an agent dumping a raw response into the
+conversation (or letting it scroll through its own reading) and
+exhausting the context window. The instruction itself must be brief
+(the rule "save context" must not itself burn ~30 lines of the loaded
+skill body). Concrete content the body should reproduce:
+
+> **Handling response verbosity.** PRO API responses are
+> explorer-enriched and can be hundreds of KB — a single
+> transaction's logs, an enriched address page, a paginated list of
+> token transfers. **Dumping a raw response into the agent's reading
+> will exhaust the context window**, so apply the same "never read
+> whole, project narrowly" discipline you apply to `pro-api.json`.
+> Two recipes:
+>
+> - **You know what you need** → pipe `curl` through `jq` with the
+>   smallest projection that satisfies the task:
+>   `curl … | jq '{n: .height, t: .timestamp}'`. Drop heavy fields
+>   you don't need (decoded calldata, NFT metadata, raw input bytes).
+> - **You're exploring or debugging an unfamiliar response** →
+>   first inspect the *schema* with `oastools walk responses` (zero
+>   credits, bounded), or save the response to disk with
+>   `curl -o /tmp/r.json` and probe it with `wc -c r.json`,
+>   `jq 'keys'`, `jq '.items[0] | keys'`, or `head -c 1000` — never
+>   `cat` the file or read it whole. Saving to disk lets you re-probe
+>   without re-fetching, but the budget rule is unchanged: only
+>   narrow projections reach the conversation.
+
+The "Putting it together" workflow recap (D.1) must reference this
+section in its call step so a checklist-driven agent applies the rule.
+
+Rationale (notes for `skill-creator`, not for the skill body):
+
+- The two recipes are deliberately narrower than a full response-
+  transformation playbook (extract, filter, flatten, blob-handling,
+  etc.). The agent's general engineering judgment covers the rest;
+  prescribing every transformation pattern adds context weight without
+  proportional benefit.
+- The "save to disk" recipe is the right answer for the debug case
+  because it avoids the credit cost of a probe-then-real pattern —
+  one fetch, many local probes — while still preventing raw output
+  from reaching the conversation.
+
 #### D.1 Wedge 3 — "Putting it together" workflow recap with a routing fork
 
 The skill body must close with a numbered workflow recap that an agent
