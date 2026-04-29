@@ -1,6 +1,6 @@
 ---
 name: bump-skill-version
-description: "Bump the blockscout-analysis skill version number across all files. Use after the API reference files have been updated and you are ready to tag a new release. Pass the new version as an argument (e.g., '0.4.0')."
+description: "Bump a skill's version number across all files in this repo (the skill's own frontmatter, the marketplace plugin entry, and any skill-specific occurrences). Pass the skill name and new version as arguments (e.g., 'blockscout-analysis 0.5.0'). Use after content changes are complete and the skill is ready for a new release."
 allowed-tools: Read, Edit, Grep
 metadata:
   internal: true
@@ -8,17 +8,19 @@ metadata:
 
 # Bump Skill Version
 
-Update the `blockscout-analysis` skill version string in every file that contains it. Run this after content changes (e.g., API reference updates) are complete and the skill is ready for a new release.
+Update a skill's version string in every file that references it. This skill works for any skill in the repo: it first applies a shared bump procedure (frontmatter version + marketplace plugin entry), then consults a per-skill reference file for any extra locations specific to that skill.
 
 ## Usage
 
-Pass the new version as `$ARGUMENTS` (e.g., `0.4.0`). If no argument is provided, ask the user for the target version before proceeding.
+Pass `<skill-name> <new-version>` as `$ARGUMENTS` (e.g., `blockscout-analysis 0.5.0`). If either is missing, ask the user before proceeding.
 
-## Files and locations
+`<skill-name>` must match a top-level skill directory in the repo root (e.g., `blockscout-analysis/`, `web3-dev/`). Verify the directory and its `SKILL.md` exist before making any edit.
 
-All edits are simple string replacements of the old version with the new version. There are exactly **3 occurrences** across **2 files**:
+## Shared procedure (applies to every skill)
 
-### 1. `blockscout-analysis/SKILL.md` — frontmatter metadata (line ~5)
+These two edits are required for every skill bump.
+
+### 1. `<skill-name>/SKILL.md` — frontmatter metadata
 
 The YAML frontmatter contains a single-line JSON `metadata` field with a `"version"` key:
 
@@ -26,36 +28,38 @@ The YAML frontmatter contains a single-line JSON `metadata` field with a `"versi
 metadata: {"author":"blockscout.com","version":"<OLD>","github":...}
 ```
 
-Replace `"version":"<OLD>"` with `"version":"<NEW>"`.
+Replace `"version":"<OLD>"` with `"version":"<NEW>"`. Use exact strings — do not use regex replacements.
 
-### 2. `blockscout-analysis/SKILL.md` — User-Agent header instruction (line ~121)
+### 2. `.claude-plugin/marketplace.json` — plugin entry version
 
-The Ad-hoc Scripts section instructs agents to set a User-Agent header:
-
-```
-User-Agent: Blockscout-SkillGuidedScript/<OLD>
-```
-
-Replace `Blockscout-SkillGuidedScript/<OLD>` with `Blockscout-SkillGuidedScript/<NEW>`.
-
-### 3. `.claude-plugin/marketplace.json` — plugin version (line ~16)
-
-The marketplace manifest lists the skill version:
+The marketplace manifest has a `plugins` array; each entry has its own `"name"` and `"version"` fields. The bare string `"version": "<OLD>"` may appear in more than one plugin entry when versions happen to coincide, so the `old_string` passed to `Edit` must include the `"name"` line of the target plugin to disambiguate. Match a block like this:
 
 ```json
-"version": "<OLD>",
+"name": "<skill-name>",
+      "description": "...",
+      "source": "./<skill-name>/",
+      "strict": false,
+      "version": "<OLD>",
 ```
 
-Replace `"version": "<OLD>"` with `"version": "<NEW>"`.
+Replace only the `"version": "<OLD>"` line within that block with `"version": "<NEW>"`. Leave the top-level marketplace `metadata.version` untouched — it tracks the marketplace as a whole, not the individual skill.
+
+## Skill-specific procedure
+
+After the shared edits, check for `references/<skill-name>.md` next to this `SKILL.md`. If it exists, follow every extra step it lists. If it does not exist, the skill has no additional version sites — skip this step. This is intentional: keeping per-skill quirks in their own file lets `SKILL.md` stay short and lets new skills be onboarded by dropping in a single reference file (or none at all).
 
 ## Procedure
 
-1. **Discover the current version**: Run `Grep` for the pattern `"version":"[0-9]+\.[0-9]+\.[0-9]+"` in `blockscout-analysis/SKILL.md` to read the current version from the frontmatter metadata.
-2. **Validate**: Confirm the new version (`$ARGUMENTS`) differs from the current version. Abort if they are identical.
-3. **Apply edits**: Use the `Edit` tool for each of the 3 locations listed above. Use exact old/new strings — do not use regex replacements.
-4. **Verify**: Run `Grep` for the old version string across the repository to confirm zero remaining occurrences (excluding `.memory_bank/` which contains spec documentation with example version strings that do not track the live version).
+1. **Parse arguments**: split `$ARGUMENTS` into `<skill-name>` and `<new-version>`. If either is missing, ask the user.
+2. **Validate target**: confirm `<skill-name>/SKILL.md` exists. Abort if not — a typo in the skill name would otherwise bump the wrong file.
+3. **Discover current version**: `Grep` for the pattern `"version":"[0-9]+\.[0-9]+\.[0-9]+"` in `<skill-name>/SKILL.md` to read the current version from the frontmatter metadata.
+4. **Validate version**: confirm `<new-version>` differs from the current version. Abort if identical.
+5. **Apply shared edits**: perform the two edits in "Shared procedure" above. Use exact old/new strings.
+6. **Apply skill-specific edits**: if `references/<skill-name>.md` exists, read it and apply each edit it lists. Otherwise skip.
+7. **Verify**: `Grep` for the old version string scoped to `<skill-name>/` and `.claude-plugin/marketplace.json` and confirm zero remaining occurrences. Other skills' files and `.memory_bank/` may legitimately contain that string and must not be touched.
 
 ## Notes
 
-- The file `.memory_bank/specs/blockscout-analysis/spec.md` contains `0.3.0` as a prose example illustrating the JSON format. This is **not** a live version reference and must **not** be updated.
-- This skill only updates version strings. It does not modify API reference content — use the `upgrade-blockscout-api` skill for that.
+- `.memory_bank/` contains spec documentation with example version strings that do not track live versions; never update them.
+- Other skills' `SKILL.md` files may currently sit at the same numeric version as the one being bumped. Do not update them — only the targeted skill changes.
+- This skill only updates version strings. It does not modify content — use the appropriate per-skill content-update workflow for that.
