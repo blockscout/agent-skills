@@ -9,31 +9,43 @@ Each skill is a self-contained directory of structured instructions and helper s
 | Skill | Description |
 |-------|-------------|
 | [blockscout-analysis](blockscout-analysis/) | Modular skill for blockchain data analysis and scripting using the Blockscout MCP Server. Guides agents to use native tools, REST API scripts, or hybrid flows for multi-chain EVM data. |
+| [web3-dev](web3-dev/) | Build web3 applications, scripts, CLIs, bots, and mobile/desktop clients that read blockchain data via the Blockscout PRO API — a single HTTP API spanning 100+ EVM chains. Sibling to `blockscout-analysis` (which targets the MCP server). |
+
+## Prerequisites
+
+Different skills depend on different Blockscout backends. Pick the row that matches the skill you want to install:
+
+| Skill | Requires |
+|-------|----------|
+| `blockscout-analysis` | Blockscout MCP server (auto-configured by the Claude Code plugin; configured manually for other agents — see below) |
+| `web3-dev` | Blockscout PRO API key (no MCP server involved) |
 
 ## Setup
 
-Each skill is a directory with a `SKILL.md` entry point and supporting docs/scripts. Integration depends on your agent platform — see examples below.
+Each skill is a directory with a `SKILL.md` entry point and supporting docs/scripts. Integration depends on your agent platform — see examples below. In the snippets below, replace `<skill>` with the directory name of the skill you want to install (e.g. `blockscout-analysis`, `web3-dev`).
 
 ### Skills CLI (40+ agents)
 
-One command installs the skill to 40+ coding agents (Claude Code, Codex, Cursor, Cline, Copilot, Windsurf, Continue, and more):
+One command installs a skill to 40+ coding agents (Claude Code, Codex, Cursor, Cline, Copilot, Windsurf, Continue, and more):
 
 ```sh
-npx skills@latest add https://github.com/blockscout/agent-skills --skill blockscout-analysis
+npx skills@latest add https://github.com/blockscout/agent-skills --skill <skill>
 ```
 
 Use `-g` to install globally, or `-a <agent>` to target a specific agent. See [skills.sh/docs](https://skills.sh/docs) for the full list of supported agents and options.
 
-> **Note:** The Skills CLI installs the skill instructions only. The Blockscout MCP server is **not** installed automatically and must be configured separately for your agent.
+> **Note:** The Skills CLI installs the skill instructions only. Skill-specific backends (MCP server for `blockscout-analysis`, PRO API key for `web3-dev`) are **not** configured automatically — see [Prerequisites](#prerequisites).
 
 ### Claude Code
 
-No separate MCP server configuration needed — it is set up automatically as part of the plugin installation.
+For `blockscout-analysis`, no separate MCP server configuration is needed — it is set up automatically as part of the plugin installation. For `web3-dev`, you still need to provide a PRO API key (see [Prerequisites](#prerequisites)).
 
 ```sh
 claude plugin marketplace add blockscout/agent-skills
-claude plugin install blockscout-analysis@blockscout-ai
+claude plugin install <skill>@blockscout-ai
 ```
+
+Replace `<skill>` with `blockscout-analysis` or `web3-dev` (or run the install command once per skill).
 
 ### Claude Desktop (Chat / Cowork / Code)
 
@@ -51,7 +63,7 @@ Must be configured separately for Chat/Cowork and for Code by the same procedure
 
    ![Enter repo ID](assets/Claude-Add-Pluging-02-Marketplace-GitHub.png)
 
-4. The marketplace **blockscout-ai** will appear in the list of Personal plugins. Click **Install** on the Blockscout analysis plugin:
+4. The marketplace **blockscout-ai** will appear in the list of Personal plugins. Click **Install** on each skill plugin you want (`blockscout-analysis`, `web3-dev`):
 
    ![Install plugin](assets/Claude-Add-Pluging-03-Install-Plugin.png)
 
@@ -59,29 +71,31 @@ Must be configured separately for Chat/Cowork and for Code by the same procedure
 
    ![Plugin info](assets/Claude-Add-Pluging-04-Plugin-Info.png)
 
-6. If the plugin has MCP servers associated, their info will be available in the **Connectors** sub-item:
+6. If the plugin has MCP servers associated (e.g. `blockscout-analysis`), their info will be available in the **Connectors** sub-item:
 
    ![Plugin connector](assets/Claude-Add-Pluging-05-Plugin-Connector.png)
 
 ### Gemini CLI
 
+The first command (registering the Blockscout MCP server) is only needed for `blockscout-analysis`; skip it for `web3-dev`.
+
 ```sh
-gemini mcp add --transport http blockscout https://mcp.blockscout.com/mcp
-gemini skills install https://github.com/blockscout/agent-skills --path blockscout-analysis
+gemini mcp add --transport http blockscout https://mcp.blockscout.com/mcp   # blockscout-analysis only
+gemini skills install https://github.com/blockscout/agent-skills --path <skill>
 ```
 
 ### Codex CLI / Codex App
 
-Configure the MCP server first. For Codex App: **Settings** → **MCP Servers** → **Add server**.
+For `blockscout-analysis`, configure the MCP server first. For Codex App: **Settings** → **MCP Servers** → **Add server**. Skip this step for `web3-dev`.
 
 ```sh
-codex mcp add blockscout --url https://mcp.blockscout.com/mcp
+codex mcp add blockscout --url https://mcp.blockscout.com/mcp   # blockscout-analysis only
 ```
 
 Then run `codex` and prompt:
 
 ```plaintext
-$skill-installer Install the skill from https://github.com/blockscout/agent-skills, path `blockscout-analysis`
+$skill-installer Install the skill from https://github.com/blockscout/agent-skills, path `<skill>`
 ```
 
 Restart Codex to pick up the skill. Before prompting, make sure that either `network_access` is allowed for the sandbox or "Full access" is granted.
