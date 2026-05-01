@@ -18,7 +18,7 @@ Pass `<skill-name> <new-version>` as `$ARGUMENTS` (e.g., `blockscout-analysis 0.
 
 ## Shared procedure (applies to every skill)
 
-These two edits are required for every skill bump.
+These three edits are required for every skill bump.
 
 ### 1. `<skill-name>/SKILL.md` — frontmatter metadata
 
@@ -44,6 +44,18 @@ The marketplace manifest has a `plugins` array; each entry has its own `"name"` 
 
 Replace only the `"version": "<OLD>"` line within that block with `"version": "<NEW>"`. Leave the top-level marketplace `metadata.version` untouched — it tracks the marketplace as a whole, not the individual skill.
 
+### 3. `.agents/plugins/<skill-name>/.codex-plugin/plugin.json` — codex plugin descriptor
+
+Each skill that ships as a Codex plugin has its own descriptor at `.agents/plugins/<skill-name>/.codex-plugin/plugin.json`. The descriptor is dedicated to one skill, so the version field is unambiguous — but include the `"name"` line in the `old_string` anyway as a sanity check that the right file is being edited:
+
+```json
+{
+  "name": "<skill-name>",
+  "version": "<OLD>",
+```
+
+Replace `"version": "<OLD>"` with `"version": "<NEW>"`. If the file does not exist for a given skill (a skill might not ship as a Codex plugin), skip this edit.
+
 ## Skill-specific procedure
 
 After the shared edits, check for `references/<skill-name>.md` next to this `SKILL.md`. If it exists, follow every extra step it lists. If it does not exist, the skill has no additional version sites — skip this step. This is intentional: keeping per-skill quirks in their own file lets `SKILL.md` stay short and lets new skills be onboarded by dropping in a single reference file (or none at all).
@@ -54,9 +66,9 @@ After the shared edits, check for `references/<skill-name>.md` next to this `SKI
 2. **Validate target**: confirm `<skill-name>/SKILL.md` exists. Abort if not — a typo in the skill name would otherwise bump the wrong file.
 3. **Discover current version**: `Grep` for the pattern `"version":"[0-9]+\.[0-9]+\.[0-9]+"` in `<skill-name>/SKILL.md` to read the current version from the frontmatter metadata.
 4. **Validate version**: confirm `<new-version>` differs from the current version. Abort if identical.
-5. **Apply shared edits**: perform the two edits in "Shared procedure" above. Use exact old/new strings.
+5. **Apply shared edits**: perform the three edits in "Shared procedure" above. Use exact old/new strings. Skip the codex descriptor edit only if the file does not exist for this skill.
 6. **Apply skill-specific edits**: if `references/<skill-name>.md` exists, read it and apply each edit it lists. Otherwise skip.
-7. **Verify**: `Grep` for the old version string scoped to `<skill-name>/` and `.claude-plugin/marketplace.json` and confirm zero remaining occurrences. Other skills' files and `.memory_bank/` may legitimately contain that string and must not be touched.
+7. **Verify**: `Grep` for the old version string scoped to `<skill-name>/`, `.claude-plugin/marketplace.json`, and `.agents/plugins/<skill-name>/` and confirm zero remaining occurrences. Other skills' files and `.memory_bank/` may legitimately contain that string and must not be touched.
 
 ## Notes
 
