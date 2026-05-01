@@ -1,0 +1,36 @@
+{
+  "name": "blockscout-ai",
+  "interface": {
+    "displayName": "Blockscout AI"
+  },
+  "plugins": [
+    {
+      "name": "blockscout-analysis",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/blockscout/agent-skills.git",
+        "path": "./plugins/blockscout-analysis",
+        "ref": "codex-plugins"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "data"
+    },
+    {
+      "name": "web3-dev",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/blockscout/agent-skills.git",
+        "path": "./plugins/web3-dev",
+        "ref": "codex-plugins"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    }
+  ]
+}

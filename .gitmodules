@@ -1,0 +1,4 @@
+[submodule ".memory_bank/specs/web3-dev/references/pro-api"]
+	path = .memory_bank/specs/web3-dev/references/pro-api
+	url = https://github.com/blockscout/pro-api
+	branch = feat/openapi-spec-intro

@@ -1,2 +1,4 @@
 .claude/skills/blockscout-analysis
 .claude/worktrees
+.DS_Store
+*.zip
