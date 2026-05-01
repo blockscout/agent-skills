@@ -1,4 +1,4 @@
-# Web3 Development
+# Web3 Dev
 
 AI agent skill for building web3 software — applications, scripts, CLIs, bots, mobile, and desktop apps — that reads blockchain data through the Blockscout PRO API. One HTTP API spans 100+ EVM chains (94+ L2s and scaling projects); switching chains is a path-parameter change.
 

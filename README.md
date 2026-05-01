@@ -1,7 +1,7 @@
 # Blockscout AI — Codex Plugins
 
 This branch holds the packaged Codex plugins for the Blockscout AI marketplace.
-It is generated from `test-re-publish`. Do not edit by hand.
+It is generated from `main`. Do not edit by hand.
 
 Install in Codex:
 

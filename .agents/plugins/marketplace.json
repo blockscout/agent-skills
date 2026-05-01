@@ -7,8 +7,10 @@
     {
       "name": "blockscout-analysis",
       "source": {
-        "source": "local",
-        "path": "./.agents/plugins/blockscout-analysis"
+        "source": "git-subdir",
+        "url": "https://github.com/blockscout/agent-skills.git",
+        "path": "./plugins/blockscout-analysis",
+        "ref": "codex-plugins"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -19,8 +21,10 @@
     {
       "name": "web3-dev",
       "source": {
-        "source": "local",
-        "path": "./.agents/plugins/web3-dev"
+        "source": "git-subdir",
+        "url": "https://github.com/blockscout/agent-skills.git",
+        "path": "./plugins/web3-dev",
+        "ref": "codex-plugins"
       },
       "policy": {
         "installation": "AVAILABLE",
