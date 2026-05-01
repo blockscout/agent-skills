@@ -1,0 +1,38 @@
+{
+  "name": "blockscout-analysis",
+  "version": "0.4.0",
+  "description": "Rules, execution strategies, and conventions for ad-hoc blockchain data analysis and building tools, scripts, and applications that query the Blockscout API.",
+  "author": {
+    "name": "Blockscout"
+  },
+  "homepage": "https://blockscout.com",
+  "repository": "https://github.com/blockscout/agent-skills",
+  "license": "MIT",
+  "keywords": [
+    "blockchain",
+    "data",
+    "evm",
+    "contract",
+    "address",
+    "wallet",
+    "web3",
+    "defi",
+    "blockscout",
+    "transaction",
+    "ens",
+    "token",
+    "analysis",
+    "development",
+    "api"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Blockchain Analysis",
+    "shortDescription": "Analyze EVM chains with Blockscout MCP.",
+    "longDescription": "Rules, execution strategies, and conventions for ad-hoc blockchain data analysis and building tools, scripts, and applications that query the Blockscout API.",
+    "developerName": "Blockscout",
+    "category": "data",
+    "websiteURL": "https://blockscout.com"
+  }
+}

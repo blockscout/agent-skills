@@ -1,11 +1,12 @@
 # Specifications
 
-This directory contains specifications for the agent skills in this repository. Each skill has its own subdirectory with a `spec.md` file capturing the original requirements and design constraints, along with supporting specs and tools used during the skill preparation phase.
+This directory contains specifications for the agent skills and supporting tooling in this repository. Each skill has its own subdirectory with a `spec.md` file capturing the original requirements and design constraints, along with supporting specs and tools used during the skill preparation phase. Repo-level tooling specs live as standalone files at the root of this directory.
 
 ## Structure
 
 ```
 specs/
+├── publish-codex-plugins-spec.md           # Spec for tools/publish-codex-plugins.sh — publishes plugins to the codex-plugins branch
 ├── blockscout-analysis/
 │   ├── spec.md                             # Main skill spec (start here)
 │   ├── api-file-generator-spec.md          # API reference file generator tool spec

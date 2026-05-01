@@ -42,10 +42,10 @@ For `blockscout-analysis`, no separate MCP server configuration is needed — it
 
 ```sh
 claude plugin marketplace add blockscout/agent-skills
-claude plugin install <skill>@blockscout-ai
+claude plugin install <plugin>@blockscout-ai
 ```
 
-Replace `<skill>` with `blockscout-analysis` or `web3-dev` (or run the install command once per skill).
+Replace `<plugin>` with `blockscout-analysis` or `web3-dev` (or run the install command once per plugin).
 
 ### Claude Desktop (Chat / Cowork / Code)
 
@@ -113,6 +113,16 @@ bash tools/package.sh <skill-directory>
 ```
 
 This produces `<skill-directory>-<version>.zip` and `<skill-directory>-<version>.skill` (version read from `SKILL.md` frontmatter) containing all tracked files except `.gitignore` and `README.md`. The `.skill` file is identical to the `.zip` but uses the extension recognised by Claude Desktop and Gemini CLI for one-click import.
+
+## Publishing Codex plugins
+
+The Codex marketplace requires plugins to be self-contained directory trees with no symlinks. To keep each skill as a single source-of-truth directory at the repo root while still serving Codex, the published Codex layout lives on a dedicated `codex-plugins` branch. To regenerate that branch from the current `main` (or a release tag) and push it:
+
+```sh
+bash tools/publish-codex-plugins.sh [<source-ref>] [<target-branch>]
+```
+
+Defaults are `main` and `codex-plugins`. The script reads only committed content from `<source-ref>`, dereferences the symlinks under `.agents/plugins/*/skills/` into real directories, copies `.agents/plugins/marketplace.json` verbatim, writes a short `README.md`, and pushes the result. See [`.memory_bank/specs/publish-codex-plugins-spec.md`](.memory_bank/specs/publish-codex-plugins-spec.md) for the full specification.
 
 ## License
 
