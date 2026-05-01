@@ -17,7 +17,7 @@ Different skills depend on different Blockscout backends. Pick the row that matc
 
 | Skill | Requires |
 |-------|----------|
-| `blockscout-analysis` | Blockscout MCP server (auto-configured by the Claude Code plugin; configured manually for other agents — see below) |
+| `blockscout-analysis` | Blockscout MCP server (auto-configured by the Claude Code and Codex plugins; configured manually for other agents — see below) |
 | `web3-dev` | Blockscout PRO API key (no MCP server involved) |
 
 ## Setup
@@ -75,6 +75,22 @@ Must be configured separately for Chat/Cowork and for Code by the same procedure
 
    ![Plugin connector](assets/Claude-Add-Pluging-05-Plugin-Connector.png)
 
+### Codex CLI / Codex App
+
+Add the marketplace first, then enable the skill plugin from inside Codex via the `/plugin` slash command (the command opens an interactive picker). For `blockscout-analysis`, the Blockscout MCP server is auto-configured by the plugin — no manual MCP setup required. For `web3-dev`, provide a PRO API key (see [Prerequisites](#prerequisites)).
+
+```sh
+codex plugin marketplace add blockscout/agent-skills
+```
+
+Then run `codex` and type:
+
+```plaintext
+/plugin
+```
+
+Select the marketplace **blockscout-ai** and enable the plugin(s) you want (`blockscout-analysis`, `web3-dev`).`
+
 ### Gemini CLI
 
 The first command (registering the Blockscout MCP server) is only needed for `blockscout-analysis`; skip it for `web3-dev`.
@@ -83,22 +99,6 @@ The first command (registering the Blockscout MCP server) is only needed for `bl
 gemini mcp add --transport http blockscout https://mcp.blockscout.com/mcp   # blockscout-analysis only
 gemini skills install https://github.com/blockscout/agent-skills --path <skill>
 ```
-
-### Codex CLI / Codex App
-
-For `blockscout-analysis`, configure the MCP server first. For Codex App: **Settings** → **MCP Servers** → **Add server**. Skip this step for `web3-dev`.
-
-```sh
-codex mcp add blockscout --url https://mcp.blockscout.com/mcp   # blockscout-analysis only
-```
-
-Then run `codex` and prompt:
-
-```plaintext
-$skill-installer Install the skill from https://github.com/blockscout/agent-skills, path `<skill>`
-```
-
-Restart Codex to pick up the skill. Before prompting, make sure that either `network_access` is allowed for the sandbox or "Full access" is granted.
 
 ## Updating
 
