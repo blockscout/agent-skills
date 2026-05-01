@@ -1,6 +1,6 @@
 ---
 name: upgrade-blockscout-api
-description: "Refresh the bundled Blockscout API reference files inside one of this repo's end-user skills. Takes a target argument; each target has its own pipeline because the source artefacts differ (Swagger releases for `blockscout-analysis`, an OpenAPI submodule for `web3-dev`). Run when a target's upstream cuts a new release and the skill's bundled references need to catch up."
+description: "Refresh the bundled Blockscout API reference files inside one of this repo's end-user skills. Takes a target argument; each target has its own pipeline because the source artefacts differ (Swagger releases for `blockscout-analysis`, a build-time clone of the `pro-api` repo for `web3-dev`). Run when a target's upstream cuts a new release and the skill's bundled references need to catch up."
 disable-model-invocation: true
 allowed-tools: Bash(python3 *), Bash(git *), Bash(bash *), Bash(./*), Bash(cp *), Read, Edit, Grep, Glob
 metadata:
@@ -24,7 +24,7 @@ The two skills published from this repo each carry their own snapshot of the Blo
 | Target | Refreshes | Procedure |
 |--------|-----------|-----------|
 | `blockscout-analysis` | `blockscout-analysis/references/blockscout-api/*.md` and the master index, from latest Blockscout backend + Stats releases. | [references/blockscout-analysis.md](references/blockscout-analysis.md) |
-| `web3-dev` | `web3-dev/references/pro-api.json` and `web3-dev/references/pro-api-index.md`, from the `pro-api` git submodule. | [references/web3-dev.md](references/web3-dev.md) |
+| `web3-dev` | `web3-dev/references/pro-api.json` and `web3-dev/references/pro-api-index.md`, from a build-time clone of the `pro-api` repo. | [references/web3-dev.md](references/web3-dev.md) |
 
 ## Routing rule
 

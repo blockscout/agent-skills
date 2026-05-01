@@ -20,10 +20,11 @@ etc.).
 
 ## Input
 
-| Source | Detail |
-|--------|--------|
-| Default path | `.memory_bank/specs/web3-dev/references/pro-api/openapi-spec/pro-api.json` |
-| CLI override | First positional argument to the script |
+The script takes the path to the OpenAPI JSON spec as its **first positional
+argument**. The argument is **required** — there is no default. Invoking the
+script with no argument is an error (argparse exits with code `2`). This is
+deliberate: the script must not silently fall back to a stale or unexpected
+input file.
 
 The file is an **OpenAPI v3.0** JSON document. The relevant top-level key is
 `paths`, which maps URL path strings to path-item objects. Each path-item

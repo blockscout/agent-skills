@@ -9,9 +9,6 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parents[3]
-DEFAULT_INPUT = (
-    SCRIPT_DIR.parent / "references" / "pro-api" / "openapi-spec" / "pro-api.json"
-)
 OUTPUT_PATH = PROJECT_ROOT / "web3-dev" / "references" / "pro-api-index.md"
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options", "trace"}
@@ -38,9 +35,7 @@ def main() -> None:
     )
     parser.add_argument(
         "input",
-        nargs="?",
-        default=str(DEFAULT_INPUT),
-        help="Path to the OpenAPI v3 JSON spec (default: %(default)s)",
+        help="Path to the OpenAPI v3 JSON spec",
     )
     args = parser.parse_args()
 

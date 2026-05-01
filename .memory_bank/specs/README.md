@@ -28,8 +28,6 @@ specs/
 └── web3-dev/
     ├── spec.md                             # Main skill spec (start here)
     ├── pro-api-indexer-spec.md             # Specification for the PRO API endpoint indexer
-    ├── references/
-    │   └── pro-api/                        # Git submodule with the Blockscout PRO API source (used to build pro-api.json)
     └── tools/                              # Supporting scripts used during skill preparation
         └── pro-api-indexer.py              # Generates the PRO API endpoint markdown index from pro-api.json
 ```
