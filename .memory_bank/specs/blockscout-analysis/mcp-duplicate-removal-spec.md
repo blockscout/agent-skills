@@ -6,7 +6,7 @@ Defines the required changes to remove API endpoints from the topic API files an
 
 ## 2. When to Apply
 
-Apply these changes (manually or via an AI agent) as the **final step** in the API file composition pipeline — after `api-file-generator.py`, `mcp-unlock-patch.py`, and the RPC patch have all been applied. This ensures that any duplicate endpoint introduced or reintroduced by earlier steps is caught and removed.
+Apply these changes (manually or via an AI agent) as the **final step** in the API file composition pipeline — after `api-file-generator.py`, `api-extras-applier.py`, and the RPC patch have all been applied. This ensures that any duplicate endpoint introduced or reintroduced by earlier steps is caught and removed.
 
 If `api-file-generator.py` is re-run, re-apply the entire pipeline including this step last.
 
@@ -16,7 +16,7 @@ The complete workflow that produces a fully documented API reference:
 swagger-main-indexer.py    → produces .build/swaggers/main-indexer/endpoints_map.json
 swagger-stats-indexer.py   → produces .build/swaggers/stats-service/endpoints_map.json
 api-file-generator.py      → creates/overwrites all topic api files AND recreates blockscout-api-index.md
-mcp-unlock-patch.py        → patches MCP-sourced endpoints into topic files and index
+api-extras-applier.py      → patches catalog endpoints into topic files and index
 [apply rpc-api-patch-spec] → patches JSON-RPC endpoints into topic files and index
 [apply this spec]          → removes endpoints that duplicate dedicated MCP tools
 ```

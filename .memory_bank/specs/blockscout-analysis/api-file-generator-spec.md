@@ -41,7 +41,7 @@ The **eight** topic files (`blocks.md` through `config.md`) and `stats.md` are a
 Chain-specific files are produced dynamically by path-based classification (Section 6.1). Adding new chain-prefixed endpoints or new swagger variants automatically produces new files without any script changes.
 
 - The `references/` and `references/blockscout-api/` directories must be created if they do not exist.
-- Before writing any files, **remove all existing `.md` files** from `references/blockscout-api/`. This ensures files created by a previous `mcp-unlock-patch.py` run (which the generator does not produce) do not survive and accumulate stale entries across generator–patch cycles.
+- Before writing any files, **remove all existing `.md` files** from `references/blockscout-api/`. This ensures files created by a previous `api-extras-applier.py` run (which the generator does not produce) do not survive and accumulate stale entries across generator–patch cycles.
 - All output files are then written fresh on each run (idempotent operation).
 - Encoding: UTF-8 for all files.
 
@@ -73,7 +73,7 @@ Note: the `/health` path from the stats-service map is excluded by the filter in
 
 ## 5. Shared Classification Module (`common.py`)
 
-The classification tables and core classification function are defined in the shared module `common.py` (`.memory_bank/specs/blockscout-analysis/tools/common.py`) so that both `api-file-generator.py` and `mcp-unlock-patch.py` operate on a single source of truth. This prevents the two scripts from drifting when prefix tables or heading overrides are updated.
+The classification tables and core classification function are defined in the shared module `common.py` (`.memory_bank/specs/blockscout-analysis/tools/common.py`) so that both `api-file-generator.py` and `api-extras-applier.py` operate on a single source of truth. This prevents the two scripts from drifting when prefix tables or heading overrides are updated.
 
 ### 5.0a Shared Constants
 
