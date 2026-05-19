@@ -15,8 +15,8 @@ The API files are produced through a sequential pipeline. Each step is defined i
 2. **Initial file generation**
    [`api-file-generator-spec.md`](api-file-generator-spec.md) — approach to build the initial set of markdown API files from the swagger files produced in step 1.
 
-3. **Patch with MCP-mentioned endpoints**
-   [`mcp-unlock-patch-spec.md`](mcp-unlock-patch-spec.md) — approach to extend the API files with the endpoints returned by the `unlock_blockchain_analysis` MCP tool that are absent from the swagger files.
+3. **Patch with extra endpoints**
+   [`api-extras-applier-spec.md`](api-extras-applier-spec.md) — approach to extend the API files with a curated catalog of `direct_api_call` endpoints that have no swagger source. The catalog (originally snapshotted from the `unlock_blockchain_analysis` MCP tool) is now maintained directly in this repository as a sibling YAML data file.
 
 4. **Patch with JSON-RPC endpoints**
    [`rpc-api-patch-spec.md`](rpc-api-patch-spec.md) — approach to extend the API files with two endpoints provided by Blockscout instances but not defined in the swagger files.

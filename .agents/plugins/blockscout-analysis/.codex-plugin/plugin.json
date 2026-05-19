@@ -1,6 +1,6 @@
 {
   "name": "blockscout-analysis",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Rules, execution strategies, and conventions for ad-hoc blockchain data analysis and building tools, scripts, and applications that query the Blockscout API.",
   "author": {
     "name": "Blockscout"

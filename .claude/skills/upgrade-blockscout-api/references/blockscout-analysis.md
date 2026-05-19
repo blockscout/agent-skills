@@ -40,13 +40,13 @@ Reads both endpoint maps from Step 1, classifies endpoints into thematic files, 
 
 This step is destructive to existing reference files — patches applied by Steps 3–5 from a previous run are erased and must be reapplied.
 
-### Step 3 — MCP Unlock Patch
+### Step 3 — Apply API Extras
 
 ```bash
-python3 .memory_bank/specs/blockscout-analysis/tools/mcp-unlock-patch.py
+python3 .memory_bank/specs/blockscout-analysis/tools/api-extras-applier.py
 ```
 
-Fetches the live `unlock_blockchain_analysis` MCP tool response from `https://mcp.blockscout.com/v1/unlock_blockchain_analysis`, identifies endpoints absent from the swagger-generated files, and patches them into the appropriate reference files and the master index.
+Reads the frozen catalog of extra endpoints from `.memory_bank/specs/blockscout-analysis/api-extras-applier-data.yaml`, identifies entries absent from the swagger-generated files, and patches them into the appropriate reference files and the master index. The catalog covers `direct_api_call` endpoints that have no swagger source (originally snapshotted from the `unlock_blockchain_analysis` MCP response and now maintained directly in the repository).
 
 ### Step 4 — JSON-RPC Endpoint Patch
 
@@ -95,7 +95,7 @@ After completing all five steps, confirm:
 |------|--------|---------------|
 | 1. Swagger acquisition | Script | `.memory_bank/specs/blockscout-analysis/swagger-main-indexer-spec.md`, `swagger-stats-indexer-spec.md` |
 | 2. File generation | Script | `.memory_bank/specs/blockscout-analysis/api-file-generator-spec.md` |
-| 3. MCP unlock patch | Script | `.memory_bank/specs/blockscout-analysis/mcp-unlock-patch-spec.md` |
+| 3. API extras applier | Script | `.memory_bank/specs/blockscout-analysis/api-extras-applier-spec.md` |
 | 4. JSON-RPC patch | Manual | `.memory_bank/specs/blockscout-analysis/rpc-api-patch-spec.md` |
 | 5. Duplicate removal | Manual | `.memory_bank/specs/blockscout-analysis/mcp-duplicate-removal-spec.md` |
 
