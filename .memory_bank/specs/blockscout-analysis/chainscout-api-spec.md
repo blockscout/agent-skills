@@ -13,7 +13,7 @@ Defines the content and format of the Chainscout API reference file at `blocksco
 
 ## 3. Chainscout API Context
 
-**Chainscout** (`https://chains.blockscout.com/api`) is the Blockscout chain registry. It is a separate service from any individual Blockscout instance and is accessed via direct HTTP requests (e.g., WebFetch or curl) — **not** via the `direct_api_call` MCP tool, which proxies to a specific Blockscout instance.
+**Chainscout** (`https://chains.blockscout.com/api`) is the Blockscout chain registry. It is a separate service from any individual Blockscout instance and is accessed via direct HTTP requests (e.g., WebFetch or curl) — **not** via the `direct_api_call` MCP tool, which does not proxy calls to the Chainscout service.
 
 The primary purpose of Chainscout access is to resolve a chain ID to its Blockscout explorer URL. Chain IDs must be obtained first from the `get_chains_list` MCP tool, which provides the authoritative list of supported chains with their IDs.
 
@@ -21,7 +21,7 @@ The primary purpose of Chainscout access is to resolve a chain ID to its Blocksc
 
 Document the following single endpoint:
 
-**`GET /chains/{chain_id}`** — Returns the descriptor for a specific chain. The `explorers` array in the response contains the Blockscout instance URL (`url`) and the hosting provider (`hostedBy`). Agents use `explorers[].url` where `hostedBy` is `"blockscout"` to obtain the Blockscout instance URL for direct API calls.
+**`GET /chains/{chain_id}`** — Returns the descriptor for a specific chain. The `explorers` array in the response contains the Blockscout instance URL (`url`) and the hosting provider (`hostedBy`). Agents use `explorers[].url` where `hostedBy` is `"blockscout"` to obtain the Blockscout instance URL.
 
 **Parameters:**
 

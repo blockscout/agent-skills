@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Defines the required changes to add two Blockscout JSON-RPC compatibility endpoints to their thematically appropriate topic API files and to the master index. These endpoints are accessed at `{instance_base_url}/api?module=<module>&action=<action>`, have no swagger source, and are absent from files produced by `api-file-generator.py`. This specification closes that gap.
+Defines the required changes to add two Blockscout JSON-RPC compatibility endpoints to their thematically appropriate topic API files and to the master index. These endpoints are accessed at `/api?module=<module>&action=<action>`, have no swagger source, and are absent from files produced by `api-file-generator.py`. This specification closes that gap.
 
 ## 2. When to Apply
 
