@@ -58,7 +58,7 @@ Pages contain ~10 items each. When the user asks for comprehensive data or "all"
 
 ### Chainscout (chain registry)
 
-Chainscout (`https://chains.blockscout.com/api`) is a separate service for resolving a chain ID to its Blockscout explorer URL. Access it via direct HTTP requests (e.g., WebFetch, curl, or from a script) — **not** via `direct_api_call`, which proxies to a specific Blockscout instance.
+Chainscout (`https://chains.blockscout.com/api`) is a separate service for resolving a chain ID to its Blockscout explorer URL. Access it via direct HTTP requests (e.g., WebFetch, curl, or from a script) — **not** via `direct_api_call`, which does not proxy calls to the Chainscout service.
 
 Chain IDs must first be obtained from the `get_chains_list` MCP tool. See `references/chainscout-api.md` for the endpoint details.
 

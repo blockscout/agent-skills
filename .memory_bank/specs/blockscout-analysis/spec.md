@@ -42,7 +42,7 @@ MCP pagination is **simplified** compared to the raw Blockscout API so that agen
 
 #### Chainscout
 
-This is the Blockscout chain registry. It is a separate service from any individual Blockscout instance and is accessed via direct HTTP requests (e.g., WebFetch or curl)—**not** via the `direct_api_call` MCP tool, which proxies to a specific Blockscout instance.
+This is the Blockscout chain registry. It is a separate service from any individual Blockscout instance and is accessed via direct HTTP requests (e.g., WebFetch or curl)—**not** via the `direct_api_call` MCP tool, which does not proxy calls to the Chainscout service.
 
 The primary purpose of Chainscout access is to resolve a chain ID to its Blockscout explorer URL. Chain IDs must first be obtained from the `get_chains_list` MCP tool, which provides the authoritative list of supported chains with their IDs.
 
