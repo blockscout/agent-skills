@@ -10,7 +10,7 @@ Create a modular AI agent skill for two equally important goals: (1) **blockchai
 
 - **MCP endpoint**: `https://mcp.blockscout.com/mcp` (native MCP protocol)
 - **REST API**: `https://mcp.blockscout.com/v1/{tool_name}?params` (HTTP GET)
-- **Multichain**: The server is multichain; almost all tools accept a `chain_id` parameter to target a specific chain (use `get_chains_list` to discover supported chains).
+- **Multichain**: The server is multichain; almost all tools accept a `chain_id` parameter to target a specific chain. Use `get_chains_list` to discover supported chains, always passing its `query` parameter — a case-insensitive substring match by chain name, ecosystem, or native currency — so the call returns only the relevant chains instead of the full registry; fall back to a no-argument call only when a query returns no matches.
 - **16 tools**: unlock_blockchain_analysis, get_chains_list, get_address_info, get_address_by_ens_name, get_tokens_by_address, nft_tokens_by_address, get_transactions_by_address, get_token_transfers_by_address, get_block_info, get_block_number, get_transaction_info, get_contract_abi, inspect_contract_code, read_contract, lookup_token_by_symbol, direct_api_call
 - **Responses**: LLM-friendly (pre-filtered, enriched), except for `direct_api_call`, which proxies raw Blockscout API responses.
 - **`direct_api_call` response size limit**: The MCP server enforces a default response size limit (100,000 characters) on `direct_api_call` responses. When exceeded, a 413 error is returned. Native MCP calls strictly enforce this limit. REST API callers can bypass it by including the `X-Blockscout-Allow-Large-Response: true` HTTP header — but scripts using this bypass must still apply [response transformation](#response-transformation) before passing output to the LLM.
@@ -379,7 +379,7 @@ The skill must describe a workflow that guides the agent through starting and co
 
 - Determine which blockchain the user is asking about from the context of the user's query.
 - Default to chain ID `1` (Ethereum Mainnet) when the query does not specify a chain or clearly refers to Ethereum.
-- Use the `get_chains_list` MCP tool to validate the chain ID. When the Blockscout instance URL is needed (e.g., for constructing explorer links), use Chainscout to resolve the chain ID to its Blockscout instance URL (see [Chainscout](#chainscout)).
+- Use the `get_chains_list(query="...")` MCP tool to validate the chain ID — pass the chain name or ecosystem the user mentioned (e.g., "Polygon", "Base") so only relevant chains are returned, falling back to a no-argument call only if the query returns no matches. When the Blockscout instance URL is needed (e.g., for constructing explorer links), use Chainscout to resolve the chain ID to its Blockscout instance URL (see [Chainscout](#chainscout)).
 
 ### 2. Choose the execution strategy
 

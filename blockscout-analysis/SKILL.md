@@ -13,7 +13,7 @@ Analyze blockchain activity and build scripts, tools, and applications that quer
 
 ### Blockscout MCP Server
 
-The server is the sole runtime data source. It is multichain — almost all tools accept a `chain_id` parameter. Use `get_chains_list` to discover supported chains.
+The server is the sole runtime data source. It is multichain — almost all tools accept a `chain_id` parameter. Use `get_chains_list` to discover supported chains. Always pass its `query` parameter — a case-insensitive substring match by chain name, ecosystem, or native currency — so the call returns only the relevant chains instead of the full registry. Fall back to a no-argument call only when a query returns no matches.
 
 | Access method | URL | Use case |
 |---------------|-----|----------|
@@ -247,7 +247,7 @@ Follow these phases in order when conducting a blockchain analysis task. The wor
 
 - Determine which blockchain the user is asking about from the query context.
 - Default to chain ID `1` (Ethereum Mainnet) when the query does not specify a chain or clearly refers to Ethereum.
-- Use `get_chains_list` to validate the chain ID.
+- Use `get_chains_list(query="...")` to validate the chain ID — pass the chain name or ecosystem the user mentioned (e.g., "Polygon", "Base") so only relevant chains are returned. Fall back to a no-argument `get_chains_list` call only if the query returns no matches.
 - When the Blockscout instance URL is needed (e.g., for explorer links), resolve the chain ID via Chainscout — see `references/chainscout-api.md`.
 
 ### Phase 2 — Choose the execution strategy
