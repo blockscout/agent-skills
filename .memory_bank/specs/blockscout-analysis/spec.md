@@ -26,7 +26,7 @@ Create a modular AI agent skill for two equally important goals: (1) **blockchai
 
 #### MCP tool documentation and discovery
 
-- **When MCP is configured**: If the Blockscout MCP server is configured (e.g., `https://mcp.blockscout.com/mcp`), tool names and descriptions are already supplied in the agent’s context by the MCP client; the agent may still use the API reference for parameter details and examples.
+- **When MCP is configured**: If the Blockscout MCP server is configured (e.g., `https://mcp.blockscout.com/mcp`), tool names and descriptions are already supplied in the agent’s context by the MCP client; the agent may still use the API reference for parameter details.
 - **When MCP is not configured**: If the MCP server is not configured, the agent can discover tools and their schemas via the REST list endpoint: `GET https://mcp.blockscout.com/v1/tools`. The skill must instruct the agent to use this URL when tool descriptions are otherwise unavailable.
 
 #### Pagination (MCP): opaque cursor and simplified model
@@ -129,6 +129,7 @@ metadata: {"author":"blockscout.com","version":"<current version>","github":"htt
 ### MCP access strategy
 
 - Scripts use the MCP REST API (`mcp.blockscout.com/v1/`) via HTTP
+- **`direct_api_call` query-string encoding**: The skill must document that, over the REST API, `direct_api_call`'s nested `query_params` object is encoded using bracket syntax in the query string (`query_params[key]=value`), with at least one concrete example. Scope this to GET/query-string usage only — the reference files contain no POST endpoints, so the skill does not document the POST/JSON-body form.
 - **User-Agent requirement**: Every HTTP request to the MCP REST API must include the header `User-Agent: Blockscout-SkillGuidedScript/<skill-version>` (where `<skill-version>` is the value from `SKILL.md` frontmatter `metadata.version`). The CDN in front of the MCP REST API rejects requests without a recognized User-Agent with HTTP 403. Because standard-library HTTP clients (e.g., Python `urllib`) send a generic User-Agent that is blocked, the skill must explicitly instruct the agent to set this header in every script. This avoids the recurring failure pattern where the agent writes a script, gets a 403, and then installs a third-party HTTP library to work around it.
 - For interactive tasks better suited to native MCP tool calls (contract analysis, `read_contract`, iterative investigation), the skill instructs the agent to ensure the native MCP server is available (see [MCP server availability](#mcp-server-availability) below)
 - The choice between script-based HTTP calls and direct MCP tool calls is governed by the execution strategy (see [Execution strategy](#execution-strategy) below)

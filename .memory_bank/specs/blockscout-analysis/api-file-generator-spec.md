@@ -189,7 +189,7 @@ The `CHAIN_FILE_CONFIG` constant in `common.py` overrides the auto-derived headi
 
 | Output file | Override |
 |-------------|----------|
-| `ethereum.md` | Heading: `Ethereum PoS Chains`; Preamble: see Section 10.3 |
+| `ethereum.md` | Heading: `Ethereum PoS Chains`; Preamble: see Section 9.3 |
 | `polygon-zkevm.md` | Heading: `Polygon zkEVM` (auto-derive produces `Polygon Zkevm`) |
 | `zksync.md` | Heading: `ZkSync` (auto-derive produces `Zksync`) |
 
@@ -295,26 +295,11 @@ Produce a Markdown table following the `api-format-spec.md` schema:
 
 If the method has no parameters and no request body, write `*None*` instead of a table.
 
-## 9. Example Request Section
-
-Since only GET endpoints are processed (Section 6.0), include an **Example Request** section only when any extracted parameter has type `object` or `array`. For endpoints where all parameters are `string`, `integer`, or `boolean`, omit the section entirely.
-
-When included, generate a `curl` command:
-
-- Base URL: `{base_url}` placeholder (representing the chain's Blockscout hostname)
-- Use the full transformed path (with `/api` or `/stats-service` prefix)
-- Substitute path parameters with realistic placeholder values:
-  - Address or hash: `0xabc...`
-  - Block number: `1000000`
-  - Token ID: `1`
-  - Batch number: `12345`
-  - Name/string: `usd` or a representative literal
-
-## 10. API File Content Format
+## 9. API File Content Format
 
 Each API output file follows the structure defined in `api-format-spec.md`.
 
-### 10.1 General Structure
+### 9.1 General Structure
 
 ```markdown
 ## API Endpoints
@@ -328,15 +313,9 @@ Description text.
 - **Parameters**
 
   <table or *None*>
-
-- **Example Request** (when applicable)
-
-  ```bash
-  curl "..."
-  ```
 ```
 
-### 10.2 Section Names (H3)
+### 9.2 Section Names (H3)
 
 **Topic files** use fixed H3 headings:
 
@@ -355,7 +334,7 @@ Description text.
 
 **Chain-specific files** use the H3 heading produced by the `CHAIN_FILE_CONFIG` override or auto-derived from the filename (Section 6.1). The heading is determined at classification time and stored alongside the endpoint records before any file is written.
 
-### 10.3 Ethereum Preamble
+### 9.3 Ethereum Preamble
 
 The `ethereum.md` file must include an introductory paragraph immediately after the `## API Endpoints` heading and before the first `### Ethereum PoS Chains` section:
 
@@ -363,15 +342,15 @@ The `ethereum.md` file must include an introductory paragraph immediately after 
 These endpoints are only available on chains that use Ethereum proof-of-stake consensus, such as **Ethereum Mainnet** and **Gnosis Chain**. They expose beacon chain deposit tracking and EIP-4844 blob transaction data that do not exist on other EVM networks.
 ```
 
-### 10.4 Endpoint Entry Order
+### 9.4 Endpoint Entry Order
 
 Within each H3 section, sort endpoint entries first by transformed endpoint path (alphabetical, case-insensitive), then by HTTP method alphabetically (`DELETE` < `GET` < `PATCH` < `POST` < `PUT`) for entries sharing the same path.
 
-## 11. Index File Format
+## 10. Index File Format
 
 The index file `blockscout-analysis/references/blockscout-api-index.md` lists every endpoint across all output files, grouped by output file. It is the agent's primary entry point for discovering `direct_api_call` endpoints (referenced directly from `SKILL.md`).
 
-### 11.1 Structure
+### 10.1 Structure
 
 ```markdown
 # Blockscout API Endpoints Index
@@ -379,7 +358,7 @@ The index file `blockscout-analysis/references/blockscout-api-index.md` lists ev
 Use this index to find available endpoints for the `direct_api_call` Blockscout MCP tool. Follow a two-step discovery process:
 
 1. **Find the endpoint below** — locate it by name or category in this index.
-2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types, descriptions, and examples for use with `direct_api_call`.
+2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types and descriptions for use with `direct_api_call`.
 
 ## [Blocks](blockscout-api/blocks.md)
 
@@ -403,21 +382,21 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 ...
 ```
 
-### 11.2 Rules
+### 10.2 Rules
 
 - Section headers are H2 with a markdown link to the file using a relative path from `references/blockscout-api-index.md`: `## [Display Name](blockscout-api/filename.md)`.
 - **Sections appear in this order:**
   1. **Topic files** in fixed order: Blocks, Transactions, Addresses, Tokens, Smart Contracts, Search, Stats, Configuration. (These are always present. There is no Withdrawals topic file — those endpoints appear in the Ethereum PoS Chains section.)
   2. **Chain-specific files** sorted alphabetically by filename (e.g., `arbitrum.md` before `celo.md` before `ethereum.md`). Only files that contain at least one endpoint are included.
-- **Display name** for a section is the H3 section heading associated with that file (derived at classification time per Section 6.1 / Section 10.2). Examples: `Blocks`, `Ethereum PoS Chains`, `Arbitrum`.
-- **Preamble in index:** For any chain-specific file that has a preamble defined in `CHAIN_FILE_CONFIG` (Section 6.1 / Section 10.3), include the same preamble text immediately after the H2 section heading and before the first endpoint line item. This ensures agents reading the index understand the context of those endpoints without opening the file. Currently only `ethereum.md` has a preamble.
+- **Display name** for a section is the H3 section heading associated with that file (derived at classification time per Section 6.1 / Section 9.2). Examples: `Blocks`, `Ethereum PoS Chains`, `Arbitrum`.
+- **Preamble in index:** For any chain-specific file that has a preamble defined in `CHAIN_FILE_CONFIG` (Section 6.1 / Section 9.3), include the same preamble text immediately after the H2 section heading and before the first endpoint line item. This ensures agents reading the index understand the context of those endpoints without opening the file. Currently only `ethereum.md` has a preamble.
 - Each line item format: `` - `/full/transformed/path`: <description> `` — path only, **no HTTP method prefix**.
 - The description must be the **full, untruncated** text — use the value resolved by the description extraction procedure in Section 7 (with summary fallback).
 - Endpoints with no resolved description omit the colon and description suffix entirely, producing `` - `/full/transformed/path` `` with no trailing whitespace.
-- Within each section, endpoints follow the same sort order as in the API file (Section 10.4).
+- Within each section, endpoints follow the same sort order as in the API file (Section 9.4).
 - When new variants are added and new chain-specific files are generated, they appear automatically in the index in their correct alphabetical position — no spec or code changes required.
 
-## 12. Script Interface
+## 11. Script Interface
 
 - **Script location:** `.memory_bank/specs/blockscout-analysis/tools/api-file-generator.py`
 - **Invocation:** `python .memory_bank/specs/blockscout-analysis/tools/api-file-generator.py`
@@ -425,7 +404,7 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 - **Working directory:** Repository root (paths in this spec are relative to the repository root).
 - **Exit code:** `0` on success, non-zero on failure.
 
-## 13. Dependencies
+## 12. Dependencies
 
 | Dependency | Version | Purpose |
 |---|---|---|
@@ -434,7 +413,7 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 
 Standard library modules used: `json`, `os`, `pathlib`, `collections`.
 
-## 14. Error Handling
+## 13. Error Handling
 
 | Scenario | Behavior |
 |---|---|
@@ -445,7 +424,7 @@ Standard library modules used: `json`, `os`, `pathlib`, `collections`.
 | Endpoint path or method key not found in swagger YAML | Print warning identifying the endpoint; write `*None*` in parameter section and continue |
 | Endpoint from `default/swagger.yaml` matches no path prefix | Print warning with the endpoint path; skip the endpoint |
 
-## 15. Console Output
+## 14. Console Output
 
 The script must print structured progress messages to stdout. Example:
 
@@ -481,7 +460,7 @@ Writing blockscout-api-index.md: 93 total endpoints
 Done.
 ```
 
-## 16. File System Layout
+## 15. File System Layout
 
 As of the current endpoint maps, the script produces:
 
@@ -510,7 +489,7 @@ blockscout-analysis/
 
 The exact set of chain-specific files grows automatically as new chain paths or variants are indexed.
 
-## 17. Non-Requirements
+## 16. Non-Requirements
 
 - **No tests required.** This is a utility script, not a product component.
 - **No CI/CD integration.** The script is run manually after swagger indexers have been run.

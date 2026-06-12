@@ -37,7 +37,6 @@ The output file follows the format conventions defined in `api-format-spec.md` a
 - **H3** (`###`): endpoint category — `### Chain Registry`
 - **H4** (`####`): individual endpoint — path only, **no HTTP method prefix** (e.g. `#### /chains/{chain_id}`)
 - **Parameters**: Markdown table following the `api-format-spec.md` schema
-- **No Example Request section**: all parameters are scalar types and the method is GET; consistent with all existing reference files
 
 ## 6. Prescribed File Content
 

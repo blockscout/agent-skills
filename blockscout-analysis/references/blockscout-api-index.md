@@ -3,7 +3,7 @@
 Use this index to find available endpoints for the `direct_api_call` Blockscout MCP tool. Follow a two-step discovery process:
 
 1. **Find the endpoint below** — locate it by name or category in this index.
-2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types, descriptions, and examples for use with `direct_api_call`.
+2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types and descriptions for use with `direct_api_call`.
 
 ## [Blocks](blockscout-api/blocks.md)
 
