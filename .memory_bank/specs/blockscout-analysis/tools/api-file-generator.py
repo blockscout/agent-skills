@@ -10,7 +10,6 @@ Usage (from repo root):
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Optional
@@ -47,16 +46,6 @@ STATS_SERVICE_SWAGGER_DIR = Path("blockscout-analysis/.build/swaggers/stats-serv
 # Stats.md section names.
 STATS_CHAIN_SECTION = "Chain Statistics"
 STATS_SERVICE_SECTION = "Stats Service"
-
-# Path parameter substitution heuristics for curl examples.
-# Each entry: ([keyword, ...], replacement_value). First match wins.
-PATH_PARAM_SUBSTITUTIONS: list[tuple[list[str], str]] = [
-    (["address", "hash"], "0xabc..."),
-    (["block", "number"], "1000000"),
-    (["token_id"],        "1"),
-    (["batch"],           "12345"),
-]
-PATH_PARAM_DEFAULT = "value"
 
 # ---------------------------------------------------------------------------
 # Loading helpers
@@ -271,34 +260,6 @@ def extract_parameters(
     return result
 
 # ---------------------------------------------------------------------------
-# Example request generation
-# ---------------------------------------------------------------------------
-
-def _substitute_path_param(name: str) -> str:
-    """Return a realistic placeholder for a path parameter."""
-    name_lower = name.lower()
-    for keywords, value in PATH_PARAM_SUBSTITUTIONS:
-        if any(kw in name_lower for kw in keywords):
-            return value
-    return PATH_PARAM_DEFAULT
-
-
-def _needs_example(params: Optional[list[dict]]) -> bool:
-    """True if any parameter has type 'object' or 'array'."""
-    if not params:
-        return False
-    return any(p["type_str"] in ("object", "array") for p in params)
-
-
-def _build_curl(transformed_path: str) -> str:
-    """Build a curl example with {base_url} placeholder, substituting path params."""
-    def replace_param(m: re.Match) -> str:
-        return _substitute_path_param(m.group(1))
-
-    path = re.sub(r"\{([^}]+)\}", replace_param, transformed_path)
-    return f'curl "{{base_url}}{path}"'
-
-# ---------------------------------------------------------------------------
 # Markdown rendering
 # ---------------------------------------------------------------------------
 
@@ -336,17 +297,6 @@ def _render_endpoint_entry(record: dict, params: Optional[list[dict]]) -> str:
         table,
     ]
 
-    if _needs_example(params):
-        curl = _build_curl(path)
-        lines += [
-            "",
-            "- **Example Request**",
-            "",
-            "  ```bash",
-            f"  {curl}",
-            "  ```",
-        ]
-
     lines.append("")
     return "\n".join(lines)
 
@@ -382,7 +332,7 @@ def _render_index_file(
         "Use this index to find available endpoints for the `direct_api_call` Blockscout MCP tool. Follow a two-step discovery process:",
         "",
         "1. **Find the endpoint below** — locate it by name or category in this index.",
-        "2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types, descriptions, and examples for use with `direct_api_call`.",
+        "2. **Read the linked detail file** — follow the section link (e.g., [Addresses](blockscout-api/addresses.md)) to get full parameter types and descriptions for use with `direct_api_call`.",
     ]
 
     def _add_section(fname: str) -> None:

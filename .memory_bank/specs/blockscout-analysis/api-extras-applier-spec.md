@@ -186,11 +186,7 @@ If the path contains no `{…}` placeholders, write `*None*` in the parameters s
 | Name is exactly `epoch_number`, `batch_number`, or `instance_id` | `integer` |
 | All other names | `string` |
 
-### 7.5 Example Request
-
-Omit entirely. Path-only parameters with scalar types (`string`, `integer`) do not satisfy the condition for including an Example Request section (see `api-file-generator-spec.md` Section 9, which requires a parameter of type `object` or `array`).
-
-### 7.6 Full Entry Example
+### 7.5 Full Entry Example
 
 For path `/api/v2/arbitrum/batches/{batch_number}` with description `"Get information for a specific Arbitrum batch."`:
 

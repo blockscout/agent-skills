@@ -25,12 +25,6 @@ Performs a unified search across multiple blockchain entity types including toke
   | `address` | `object` | No | Address for paging in the search results |
   | `ens_domain` | `object` | No | ENS domain for paging in the search results |
 
-- **Example Request**
-
-  ```bash
-  curl "{base_url}/api/v1/search"
-  ```
-
 #### GET /api/v2/search
 
 Performs a unified search across multiple blockchain entity types including tokens, addresses, contracts, blocks, transactions and other resources.
@@ -53,12 +47,6 @@ Performs a unified search across multiple blockchain entity types including toke
   | `user_operation` | `object` | No | User operation for paging in the search results |
   | `address` | `object` | No | Address for paging in the search results |
   | `ens_domain` | `object` | No | ENS domain for paging in the search results |
-
-- **Example Request**
-
-  ```bash
-  curl "{base_url}/api/v2/search"
-  ```
 
 #### GET /api/v2/search/check-redirect
 

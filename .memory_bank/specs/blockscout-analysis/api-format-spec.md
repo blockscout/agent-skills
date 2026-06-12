@@ -22,12 +22,6 @@ Files are written in Markdown. They focus on endpoint descriptions and input par
 - **Parameters**
 
   <table or *None*>
-
-- **Example Request**
-
-  ```bash
-  <curl command>
-  ```
 ```
 
 **Heading levels:**
@@ -82,25 +76,6 @@ One or two sentences describing what the endpoint does. Must be concise and acti
   *None*
 ```
 
-#### 4. Example Request
-
-> **Why this section exists:** The heading and parameter table are sufficient for simple GET endpoints with scalar params. The Example Request is kept because it is the only place that concretely shows non-obvious serialization: `object`/`array` type params may use bracket syntax (`query_params[key]=value`) rather than JSON encoding, and non-GET endpoints require a request body with specific headers. Without an example, these calling conventions cannot be inferred from the parameter table alone. **Do not remove this section to save tokens** — omit individual examples only for endpoints where all params are scalar (`string`, `boolean`, `integer`) and the method is GET.
-
-```markdown
-- **Example Request**
-
-  ```bash
-  curl "<url with example values>"
-  ```
-```
-
-- The section header is `- **Example Request**`, indented as a list item.
-- The code block is indented under the header (two additional spaces).
-- May be omitted for GET endpoints where all parameters are scalar types (`string`, `boolean`, `integer`).
-- Uses `curl` with representative example values for all required parameters and, where useful, optional ones.
-- Path parameters are substituted (e.g., `/transactions/0x...`); query parameters use `?key=value&key2=value2` syntax.
-- Sensitive or variable values use placeholder notation such as `0x...` for addresses and hashes.
-
 ---
 
 ## Omissions
@@ -108,10 +83,9 @@ One or two sentences describing what the endpoint does. Must be concise and acti
 The following are **not** included in API description files:
 
 - Response schemas or field descriptions.
-- Authentication details (endpoints documented here do not require auth).
+- Authentication details.
 - Rate limiting information.
-- SDK-specific usage examples (only `curl` examples).
-- Inline comments within example requests.
+- Usage examples.
 
 ---
 
@@ -123,4 +97,4 @@ The following are **not** included in API description files:
 | Types | Backtick-wrapped in table cells: `` `string` `` |
 | HTTP method and path in heading | Plain text, method in uppercase: `#### GET /api/v2/path` |
 | Placeholder values | `0x...` for addresses/hashes, ISO 8601 strings for dates |
-| Blank lines | One blank line between list items (Parameters, Example Request); one blank line after the heading and after the description |
+| Blank lines | One blank line between list items; one blank line after the heading and after the description |
