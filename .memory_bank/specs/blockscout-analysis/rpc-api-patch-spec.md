@@ -98,18 +98,18 @@ The canonical path identifier for each endpoint is `/api?module=<module>&action=
 
 ## 6. Master Index Updates
 
-After the topic files are updated, add the following line items to the master index `blockscout-analysis/references/blockscout-api-index.md` in the appropriate existing sections.
+After the topic files are updated, add the following line items to the master index `blockscout-analysis/references/blockscout-api-index.md` in the appropriate existing sections. The generated index carries the first paragraph of each description (see `api-file-generator-spec.md`); because these two JSON-RPC descriptions are authored as a single dense paragraph, that rule would pull in the full text, so the index instead uses the concise **lead sentence** shown below. The complete description stays in the detail-file entry (Sections 3.1 and 3.2).
 
 **In the `## [Transactions](blockscout-api/transactions.md)` section:**
 
 ```
-- `/api?module=logs&action=getLogs`: Returns event logs filtered by block range, optional contract address, and up to four topic values. Results are capped at 1,000 entries.
+- `/api?module=logs&action=getLogs`: Returns event logs filtered by block range, optional contract address, and up to four topic values.
 ```
 
 **In the `## [Addresses](blockscout-api/addresses.md)` section:**
 
 ```
-- `/api?module=account&action=eth_get_balance`: Returns the ETH balance of an address as a hex-encoded wei value (0x-prefixed). Decode from hexadecimal to get the decimal balance in wei. Supports historical queries via the `block` parameter (e.g. a decimal block number).
+- `/api?module=account&action=eth_get_balance`: Returns the ETH balance of an address in an Ethereum-compatible hex format (0x-prefixed).
 ```
 
 Insert each line item in sort order within its section. The path `/api?module=...` sorts after all `/api/v2/...` paths (ASCII: `?` > `/`), so these entries appear at the end of their respective sections.

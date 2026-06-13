@@ -10,17 +10,9 @@ Retrieves a paginated list of verified smart contracts with optional filtering b
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-  | `sort` | `string` | No | Sort transactions by:
-* block_number - Sort by block number
-* value - Sort by transaction value
-* fee - Sort by transaction fee
+  | `sort` | `string` | No | Sort results by:
 * balance - Sort by account balance
-* transactions_count - Sort by number of transactions on address
-* fiat_value - Sort by fiat value of the token transfer
-* holders_count - Sort by number of token holders
-* circulating_market_cap - Sort by circulating market cap of the token
+* transactions_count - Sort by number of transactions
 Should be used together with `order` parameter.
  |
   | `order` | `string` | No | Sort order:
@@ -42,10 +34,7 @@ Retrieves count statistics for smart contracts, including total contracts, verif
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/smart-contracts/{address_hash_param}
 
@@ -56,8 +45,6 @@ Retrieves detailed information about a specific verified smart contract, includi
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/smart-contracts/{address_hash_param}/audit-reports
 
@@ -68,5 +55,3 @@ Returns audit reports for a given smart contract address.
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |

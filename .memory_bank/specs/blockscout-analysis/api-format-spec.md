@@ -86,6 +86,7 @@ The following are **not** included in API description files:
 - Authentication details.
 - Rate limiting information.
 - Usage examples.
+- Authentication/access query parameters (`apikey`, `key`). The agent never supplies these via `direct_api_call`, and they appear on nearly every endpoint, so listing them in every parameter table only wastes context. Generators drop them by exact-name match (see `api-file-generator-spec.md` Section 8.3).
 
 ---
 

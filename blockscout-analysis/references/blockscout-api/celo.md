@@ -10,8 +10,6 @@ Retrieves Celo election rewards for a specific address.
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `items_count` | `integer` | No | Number of items returned per page |
   | `epoch_number` | `string` | No | Epoch number for paging |
@@ -21,59 +19,36 @@ Retrieves Celo election rewards for a specific address.
 
 #### GET /api/v2/celo/epochs
 
-Get the latest finalized epochs for Celo.
-
-- **Parameters**
-
-  *None*
-
-#### GET /api/v2/celo/epochs/{epoch_number}
-
-Get information for a specific Celo epoch.
+Retrieves a paginated list of Celo epochs.
 
 - **Parameters**
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `epoch_number` | `integer` | Yes |  |
+  | `number` | `integer` | No | Number for paging |
+  | `items_count` | `integer` | No | Number of items returned per page |
 
-#### GET /api/v2/celo/epochs/{epoch_number}/election-rewards/group
+#### GET /api/v2/celo/epochs/{number}
 
-Get validator group rewards for a specific Celo epoch.
-
-- **Parameters**
-
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `epoch_number` | `integer` | Yes |  |
-
-#### GET /api/v2/celo/epochs/{epoch_number}/election-rewards/validator
-
-Get validator rewards for a specific Celo epoch.
+Retrieves detailed information about a Celo epoch.
 
 - **Parameters**
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `epoch_number` | `integer` | Yes |  |
+  | `number` | `string` | Yes | Epoch number in the path. |
 
-#### GET /api/v2/celo/epochs/{epoch_number}/election-rewards/voter
+#### GET /api/v2/celo/epochs/{number}/election-rewards/{type}
 
-Get voter rewards for a specific Celo epoch.
-
-- **Parameters**
-
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `epoch_number` | `integer` | Yes |  |
-
-#### GET /api/v2/config/celo
-
-Returns Celo-specific configuration (l2 migration block).
+Retrieves a paginated list of election rewards for a Celo epoch and reward type.
 
 - **Parameters**
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  | `number` | `string` | Yes | Epoch number in the path. |
+  | `type` | `string` | Yes | Reward type in the path. |
+  | `amount` | `string` | No | Amount for paging |
+  | `account_address_hash` | `string` | No | Account address hash for paging |
+  | `associated_account_address_hash` | `string` | No | Associated account address hash for paging |
+  | `items_count` | `integer` | No | Number of items returned per page |

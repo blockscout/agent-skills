@@ -18,11 +18,9 @@ Retrieves L2 transactions bound to a specific ZkSync batch number.
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `batch_number_param` | `integer` | Yes | Batch number |
   | `block_number` | `integer` | No | Block number for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 #### GET /api/v2/zksync/batches/{batch_number}

@@ -11,8 +11,6 @@ Performs a unified search across multiple blockchain entity types including toke
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `q` | `string` | No | Search query filter |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `next_page_params_type` | `string` | No | Next page params type for paging |
   | `label` | `object` | No | Label for paging in the search results |
   | `token` | `object` | No | Token for paging in the search results |
@@ -34,8 +32,6 @@ Performs a unified search across multiple blockchain entity types including toke
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `q` | `string` | No | Search query filter |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `next_page_params_type` | `string` | No | Next page params type for paging |
   | `label` | `object` | No | Label for paging in the search results |
   | `token` | `object` | No | Token for paging in the search results |
@@ -57,8 +53,6 @@ Checks if a search query redirects to a specific entity page rather than showing
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `q` | `string` | No | Search query filter |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/search/quick
 
@@ -69,5 +63,3 @@ Performs a quick, unpaginated search for short queries.
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `q` | `string` | No | Search query filter |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |

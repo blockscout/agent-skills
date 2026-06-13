@@ -4,14 +4,22 @@
 
 #### GET /api/v2/blocks
 
-Retrieves a paginated list of blocks with optional filtering by block type.
+Retrieves a paginated list of blocks ordered by descending block number.
+
+When the `type` query parameter is omitted, only main-chain consensus blocks
+(equivalent to `type=block`) are returned. Use `type=uncle` to list ommer
+blocks (valid but not in the main chain) and `type=reorg` to list blocks
+that lost consensus during a chain reorganization.
+
+Pagination is cursor-based: the response contains `next_page_params` with
+`block_number` and `items_count` — pass these back as query parameters on
+the next request to fetch the following page.
+
 
 - **Parameters**
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `type` | `string` | No | Filter by block type:
 * block - Standard blocks in the main chain
 * uncle - Uncle/ommer blocks (valid but not in main chain)
@@ -29,8 +37,6 @@ Retrieves internal transactions included in a specific block with optional filte
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `block_hash_or_number_param` | `string` | Yes | Block hash or number in the path |
   | `internal_type` | `string` | No | Filter internal transactions by type:
 * all - Show all internal transactions (default)
@@ -51,7 +57,7 @@ Retrieves internal transactions included in a specific block with optional filte
 * invalid - Only show invalid internal transactions (Arbitrum only)
  |
   | `transaction_index` | `integer` | No | Transaction index for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 #### GET /api/v2/blocks/{block_hash_or_number_param}/transactions
@@ -62,8 +68,6 @@ Retrieves transactions included in a specific block, ordered by transaction inde
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `block_hash_or_number_param` | `string` | Yes | Block hash or number in the path |
   | `type` | `string` | No | Filter by transaction type. Comma-separated list of:
 * token_transfer - Token transfer transactions
@@ -74,7 +78,7 @@ Retrieves transactions included in a specific block, ordered by transaction inde
 * blob_transaction - Only show blob transactions (Ethereum only)
  |
   | `block_number` | `integer` | No | Block number for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 #### GET /api/v2/blocks/{block_hash_or_number_param}/withdrawals
@@ -85,10 +89,8 @@ Retrieves withdrawals processed in a specific block (typically for proof-of-stak
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `block_hash_or_number_param` | `string` | Yes | Block hash or number in the path |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 #### GET /api/v2/blocks/{block_number_param}/countdown
@@ -100,5 +102,3 @@ Calculates the estimated time remaining until a specified block number is reache
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `block_number_param` | `integer` | Yes | Block number in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |

@@ -17,6 +17,15 @@ import yaml
 
 HTTP_METHODS = {"get", "post", "put", "delete", "patch", "head", "options"}
 
+# Query parameters excluded from generated reference files (exact-name match).
+# These authentication/access params are declared on nearly every endpoint in
+# the swagger source. They are never passed by the agent via direct_api_call
+# (the MCP server injects them), so documenting them on every endpoint only
+# repeats two rows hundreds of times and wastes the agent's context.
+# Exact-name match only — substrings like `key_bytes` or `validator_public_key`
+# are legitimate parameters and must be preserved.
+EXCLUDED_PARAM_NAMES: frozenset[str] = frozenset({"apikey", "key"})
+
 # ---------------------------------------------------------------------------
 # Output paths
 # ---------------------------------------------------------------------------
@@ -31,8 +40,8 @@ API_DIR = REFERENCES_DIR / "blockscout-api"
 # Fixed topic file ordering and display names.
 # Note: withdrawals.md is intentionally absent — those endpoints route to ethereum.md.
 TOPIC_FILE_ORDER: list[str] = [
-    "blocks.md", "transactions.md", "addresses.md", "tokens.md",
-    "smart-contracts.md", "search.md", "stats.md", "config.md",
+    "blocks.md", "transactions.md", "user-operations.md", "addresses.md", "tokens.md",
+    "smart-contracts.md", "search.md", "stats.md",
 ]
 
 # Topic filename → display name / index heading.
@@ -41,12 +50,12 @@ TOPIC_FILE_ORDER: list[str] = [
 TOPIC_HEADINGS: dict[str, str] = {
     "blocks.md":          "Blocks",
     "transactions.md":    "Transactions",
+    "user-operations.md": "User Operations",
     "addresses.md":       "Addresses",
     "tokens.md":          "Tokens",
     "smart-contracts.md": "Smart Contracts",
     "search.md":          "Search",
     "stats.md":           "Stats",
-    "config.md":          "Configuration",
 }
 
 # Chain-specific prefix table (Pass 1 in classification pipeline).
@@ -59,7 +68,6 @@ CHAIN_PREFIXES: list[tuple[str, str]] = [
     ("/v2/transactions/arbitrum-batch/", "arbitrum.md"),
     ("/v2/transactions/optimism-batch/", "optimism.md"),
     ("/v2/transactions/scroll-batch/",   "scroll.md"),
-    ("/v2/transactions/zkevm-batch/",    "polygon-zkevm.md"),
     ("/v2/transactions/zksync-batch/",   "zksync.md"),
     # Main-page chain references
     ("/v2/main-page/arbitrum/",          "arbitrum.md"),
@@ -76,7 +84,6 @@ CHAIN_PREFIXES: list[tuple[str, str]] = [
     ("/v2/optimism/",                    "optimism.md"),
     ("/v2/scroll/",                      "scroll.md"),
     ("/v2/shibarium/",                   "shibarium.md"),
-    ("/v2/zkevm/",                       "polygon-zkevm.md"),
     ("/v2/zksync/",                      "zksync.md"),
     # Withdrawals (Ethereum PoS only)
     ("/v2/withdrawals",                  "ethereum.md"),
@@ -93,6 +100,8 @@ CHAIN_KEYWORD_RULES: list[tuple[str, str]] = [
 # Raw swagger paths (no /api prefix).
 TOPIC_PREFIXES: list[tuple[str, str]] = [
     ("/v2/internal-transactions", "transactions.md"),  # top-level; block-scoped stays under /v2/blocks/
+    ("/v2/advanced-filters",      "transactions.md"),  # mixed tx / internal-tx / token-transfer activity filter
+    ("/v2/proxy/account-abstraction/", "user-operations.md"),  # ERC-4337 user operations, bundlers, paymasters, etc.
     ("/v2/blocks/",               "blocks.md"),
     ("/v2/token-transfers",       "tokens.md"),        # global token transfers belong with tokens
     ("/v2/transactions/",         "transactions.md"),
@@ -103,7 +112,6 @@ TOPIC_PREFIXES: list[tuple[str, str]] = [
     ("/v1/search",                "search.md"),
     ("/v2/stats",                 "stats.md"),
     ("/v2/main-page/",            "stats.md"),
-    ("/v2/config/",               "config.md"),
 ]
 
 # Chain file heading/preamble overrides keyed by output filename.
@@ -118,7 +126,6 @@ CHAIN_FILE_CONFIG: dict[str, dict] = {
             "that do not exist on other EVM networks."
         ),
     },
-    "polygon-zkevm.md": {"heading": "Polygon zkEVM"},
     "zksync.md":         {"heading": "ZkSync"},
 }
 
@@ -190,7 +197,7 @@ def heading_for(filename: str) -> str:
     Note: stats.md returns "Chain Statistics" (the primary H3 section).
     The "Stats Service" section is handled by each consuming script individually.
     """
-    # Check CHAIN_FILE_CONFIG first (handles ethereum.md, polygon-zkevm.md, zksync.md)
+    # Check CHAIN_FILE_CONFIG first (handles ethereum.md, zksync.md)
     cfg = CHAIN_FILE_CONFIG.get(filename, {})
     if "heading" in cfg:
         return cfg["heading"]
@@ -201,6 +208,21 @@ def heading_for(filename: str) -> str:
         return TOPIC_HEADINGS[filename]
     # Auto-derive for unknown chain files
     return filename.replace(".md", "").replace("-", " ").title()
+
+
+def first_paragraph(text: str) -> str:
+    """
+    Return the first paragraph of a description, collapsed to a single line.
+
+    Index line items must be terse — the full, multi-paragraph description is
+    kept in the detail file. The first paragraph is the text up to the first
+    blank line (a line that is empty or whitespace-only); any line wraps and
+    runs of whitespace inside it are collapsed to single spaces so the index
+    line is always a single physical line. A single-paragraph description is
+    returned whole (collapsed), regardless of how many sentences it contains.
+    """
+    para = re.split(r"\n[ \t]*\n", text.strip(), maxsplit=1)[0]
+    return " ".join(para.split())
 
 
 def format_index_line(path: str, desc: str) -> str:

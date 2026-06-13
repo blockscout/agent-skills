@@ -32,9 +32,11 @@ from common import (  # noqa: E402
     API_DIR,
     TOPIC_FILE_ORDER,
     TOPIC_HEADINGS,
+    EXCLUDED_PARAM_NAMES,
     classify_endpoint,
     heading_for,
     format_index_line,
+    first_paragraph,
 )
 
 # ---------------------------------------------------------------------------
@@ -51,17 +53,16 @@ INDEX_FILE = REFERENCES_DIR / "blockscout-api-index.md"
 
 # chain_family → (filename, heading) special-case overrides (spec Section 6.1)
 CHAIN_FAMILY_MAP: dict[str, tuple[str, str]] = {
-    "Ethereum Mainnet and Gnosis": ("ethereum.md",      "Ethereum PoS Chains"),
-    "zkEVM":                       ("polygon-zkevm.md", "Polygon zkEVM"),
-    "zkSync":                      ("zksync.md",        "ZkSync"),
+    "Ethereum Mainnet and Gnosis": ("ethereum.md", "Ethereum PoS Chains"),
+    "zkSync":                      ("zksync.md",   "ZkSync"),
 }
 
 # group → (filename, h3_section) for common endpoints (spec Section 6.2)
 # Stats group is handled separately (depends on path prefix).
 COMMON_GROUP_MAP: dict[str, tuple[str, str]] = {
-    "Transactions":    ("transactions.md", "Transactions"),
-    "User Operations": ("transactions.md", "User Operations"),
-    "Tokens & NFTs":   ("tokens.md",       "Tokens"),
+    "Transactions":    ("transactions.md",    "Transactions"),
+    "User Operations": ("user-operations.md", "User Operations"),
+    "Tokens & NFTs":   ("tokens.md",          "Tokens"),
 }
 
 # HTTP method sort order for tie-breaking (spec Section 8.1).
@@ -297,8 +298,13 @@ def render_endpoint(ep: dict) -> str:
         lines.append(description)
         lines.append("")
 
-    # Extract path parameters
-    param_names = re.findall(r'\{([^}]+)\}', path)
+    # Extract path parameters, dropping excluded auth/access params
+    # (see common.EXCLUDED_PARAM_NAMES). Defensive: catalog paths use path
+    # params only, so this normally has no effect.
+    param_names = [
+        n for n in re.findall(r'\{([^}]+)\}', path)
+        if n not in EXCLUDED_PARAM_NAMES
+    ]
 
     lines.append("- **Parameters**")
     lines.append("")
@@ -456,8 +462,9 @@ def patch_api_file(
 # ---------------------------------------------------------------------------
 
 def _make_index_line(ep: dict) -> str:
-    """Format a single index line item."""
-    return format_index_line(ep["path"], ep.get("description", ""))
+    """Format a single index line item (first paragraph only; the detail entry
+    keeps the full catalog description)."""
+    return format_index_line(ep["path"], first_paragraph(ep.get("description", "")))
 
 
 def _get_display_name_for_file(filename: str, h3_section: str) -> str:

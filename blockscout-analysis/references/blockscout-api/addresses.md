@@ -10,17 +10,9 @@ Retrieves a paginated list of addresses holding the native coin, sorted by balan
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-  | `sort` | `string` | No | Sort transactions by:
-* block_number - Sort by block number
-* value - Sort by transaction value
-* fee - Sort by transaction fee
+  | `sort` | `string` | No | Sort results by:
 * balance - Sort by account balance
-* transactions_count - Sort by number of transactions on address
-* fiat_value - Sort by fiat value of the token transfer
-* holders_count - Sort by number of token holders
-* circulating_market_cap - Sort by circulating market cap of the token
+* transactions_count - Sort by number of transactions
 Should be used together with `order` parameter.
  |
   | `order` | `string` | No | Sort order:
@@ -41,8 +33,6 @@ Retrieves blocks that were validated (mined) by a specific address. Useful for t
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `block_number` | `integer` | No | Block number for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
@@ -55,8 +45,6 @@ Retrieves historical native coin balance changes for a specific address, trackin
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `block_number` | `integer` | No | Block number for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
@@ -70,8 +58,6 @@ Retrieves daily snapshots of native coin balance for a specific address. Useful 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/addresses/{address_hash_param}/counters
 
@@ -82,8 +68,6 @@ Retrieves count statistics for an address, including transactions, token transfe
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/addresses/{address_hash_param}/internal-transactions
 
@@ -93,8 +77,6 @@ Retrieves all internal transactions involving a specific address, with optional 
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `filter` | `string` | No | Filter transactions by direction:
 * to - Only show transactions sent to this address
@@ -102,7 +84,7 @@ Retrieves all internal transactions involving a specific address, with optional 
 If omitted, all transactions involving the address are returned.
  |
   | `block_number` | `integer` | No | Block number for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
   | `transaction_index` | `integer` | No | Transaction index for paging |
 
@@ -114,12 +96,10 @@ Retrieves event logs emitted by or involving a specific address.
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `topic` | `string` | No | Log topic param in the query |
   | `block_number` | `integer` | No | Block number for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 #### GET /api/v2/addresses/{address_hash_param}/nft
@@ -130,8 +110,6 @@ Retrieves a list of NFTs (non-fungible tokens) owned by a specific address, with
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `type` | `string` | No | Filter by token type. Comma-separated list of:
 * ERC-721 - Non-fungible tokens
@@ -153,8 +131,6 @@ Retrieves NFTs owned by a specific address, organized by collection. Useful for 
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `type` | `string` | No | Filter by token type. Comma-separated list of:
 * ERC-721 - Non-fungible tokens
@@ -176,8 +152,6 @@ Retrieves counters for various address-related entities (max counter value is 51
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/addresses/{address_hash_param}/token-balances
 
@@ -188,8 +162,6 @@ Retrieves all token balances held by a specific address, including ERC-20, ERC-7
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/addresses/{address_hash_param}/token-transfers
 
@@ -199,8 +171,6 @@ Retrieves token transfers involving a specific address, with optional filtering 
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `filter` | `string` | No | Filter transactions by direction:
 * to - Only show transactions sent to this address
@@ -218,7 +188,7 @@ Example: `ERC-20,ERC-721` to show both fungible and NFT transfers
  |
   | `token` | `string` | No | Filter token transfers by token contract address. |
   | `block_number` | `integer` | No | Block number for paging |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
   | `batch_log_index` | `integer` | No | Batch log index for paging |
   | `batch_block_hash` | `string` | No | Batch block hash for paging |
@@ -233,8 +203,6 @@ Retrieves token balances for a specific address with pagination and filtering by
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `type` | `string` | No | Filter by token type. Comma-separated list of:
 * ERC-20 - Fungible tokens
@@ -258,23 +226,16 @@ Retrieves transactions involving a specific address, with optional filtering for
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `filter` | `string` | No | Filter transactions by direction:
 * to - Only show transactions sent to this address
 * from - Only show transactions sent from this address
 If omitted, all transactions involving the address are returned.
  |
-  | `sort` | `string` | No | Sort transactions by:
+  | `sort` | `string` | No | Sort results by:
 * block_number - Sort by block number
 * value - Sort by transaction value
 * fee - Sort by transaction fee
-* balance - Sort by account balance
-* transactions_count - Sort by number of transactions on address
-* fiat_value - Sort by fiat value of the token transfer
-* holders_count - Sort by number of token holders
-* circulating_market_cap - Sort by circulating market cap of the token
 Should be used together with `order` parameter.
  |
   | `order` | `string` | No | Sort order:
@@ -298,10 +259,8 @@ Retrieves withdrawals involving a specific address, typically for proof-of-stake
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `items_count` | `integer` | No | Number of items returned per page |
 
 ### JSON-RPC Compatibility
