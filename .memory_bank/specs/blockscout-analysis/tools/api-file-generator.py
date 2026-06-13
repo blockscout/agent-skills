@@ -25,9 +25,11 @@ from common import (  # noqa: E402
     TOPIC_FILE_ORDER,
     TOPIC_HEADINGS,
     CHAIN_FILE_CONFIG,
+    EXCLUDED_PARAM_NAMES,
     classify_endpoint,
     chain_file_info,
     format_index_line,
+    first_paragraph,
 )
 
 # ---------------------------------------------------------------------------
@@ -138,8 +140,21 @@ def classify_records(
         if rec.get("method") != "GET":
             continue
         endpoint = rec["endpoint"]
-        # Skip CSV export endpoints and the CSV configuration endpoint.
-        if endpoint.endswith("/csv") or endpoint == "/v2/config/csv-export":
+        # Skip CSV export endpoints.
+        if endpoint.endswith("/csv"):
+            continue
+        # Skip all configuration endpoints (backend/indexer/public-metrics/
+        # csv-export config/chain-specific config such as /v2/config/celo).
+        # These describe the Blockscout instance's own configuration, not
+        # on-chain data, so they are not useful for agent queries.
+        if endpoint == "/v2/config" or endpoint.startswith("/v2/config/"):
+            continue
+        # Skip async CSV export job endpoints (bulk export, not agent queries).
+        if endpoint == "/v2/csv-exports" or endpoint.startswith("/v2/csv-exports/"):
+            continue
+        # Skip legacy Etherscan-compat endpoints. The curated JSON-RPC patch
+        # (rpc-api-patch-spec.md) is the canonical agent-facing form of these.
+        if endpoint.startswith("/legacy/"):
             continue
         sf = rec["swagger_file"]
         transformed = "/api" + endpoint
@@ -247,6 +262,9 @@ def extract_parameters(
         if param_in not in ("path", "query"):
             continue
         name = p.get("name", "")
+        if name in EXCLUDED_PARAM_NAMES:
+            # Auth/access params (e.g. apikey, key) — see common.EXCLUDED_PARAM_NAMES.
+            continue
         type_str = _get_param_type(p)
         required = True if param_in == "path" else bool(p.get("required", False))
         description = p.get("description", "") or ""
@@ -347,7 +365,9 @@ def _render_index_file(
             lines.append("")
         records = _get_index_records(fname, classified)
         for rec in records:
-            desc = rec.get("_description", "")
+            # Index lines carry only the first paragraph; the detail file keeps
+            # the full description (see _render_endpoint_entry).
+            desc = first_paragraph(rec.get("_description", ""))
             path = rec["transformed_path"]
             lines.append(format_index_line(path, desc))
 

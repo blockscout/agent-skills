@@ -46,13 +46,15 @@ Each endpoint is a mapping with:
 | `path` | string | Full API path, e.g. `/api/v2/arbitrum/batches/{batch_number}` |
 | `description` | string | Human-readable description |
 
-The schema mirrors the historical `direct_api_endpoints` field of the `unlock_blockchain_analysis` MCP response one-to-one, so the data file can be re-snapshotted by transcribing that response if a fresh capture is ever needed.
+The schema follows the historical `direct_api_endpoints` field of the `unlock_blockchain_analysis` MCP response, but the catalog is **not** a verbatim mirror of it: entries the generator already produces are excluded (see Section 3.2). Consequently `common` may legitimately be an empty list when no swagger-less common endpoints remain.
 
 ### 3.2 Maintaining the Catalog
 
 To add, remove, or change endpoints, edit the YAML file directly and commit the change. There is no automatic synchronisation with any live MCP endpoint. Changes become reviewable in source control just like any other documentation edit.
 
 If the upstream Blockscout MCP server gains a new endpoint that the skill should expose via `direct_api_call`, a maintainer adds it to this file; if an endpoint is retired, the maintainer removes it. Drift between this catalog and the server's own endpoint list is therefore a deliberate, reviewable event rather than an invisible runtime side effect.
+
+**The catalog must contain only endpoints with no swagger source.** Before adding an entry — or when re-snapshotting from a fresh MCP capture — drop any endpoint the generator already produces, since the missing-endpoint check (Section 5.2) skips it anyway. That check matches by **exact** normalised path, so it will **not** recognise a literal entry already covered by a *parameterised* swagger path — for example `/v2/arbitrum/messages/{direction}` covers `.../to-rollup` and `.../from-rollup`, and `/v2/celo/epochs/{number}/election-rewards/{type}` covers the `group`/`validator`/`voter` variants. Such subsumed entries must be removed manually; left in, they surface as duplicate entries in the generated output.
 
 ## 4. Output File Layout
 
@@ -63,7 +65,7 @@ blockscout-analysis/
   references/
     blockscout-api-index.md          # updated with new entries and sections
     blockscout-api/
-      transactions.md                # may gain a new ### User Operations section
+      user-operations.md             # may gain entries in its ### User Operations section
       <existing chain files>         # may gain new endpoint entries
       <new chain files>              # created for chains not yet in any api file
 ```
@@ -115,7 +117,6 @@ When a new `chain_family` is added to the catalog and is not listed in the speci
 | `chain_family` | Filename override | Heading override |
 |---|---|---|
 | `Ethereum Mainnet and Gnosis` | `ethereum.md` | `Ethereum PoS Chains` |
-| `zkEVM` | `polygon-zkevm.md` | `Polygon zkEVM` |
 | `zkSync` | `zksync.md` | `ZkSync` |
 
 ### 6.2 Common Endpoints (`common`)
@@ -128,7 +129,7 @@ Common endpoints are routed by their `group` field using `COMMON_GROUP_MAP`, a c
 |---|---|---|
 | `Stats` | `stats.md` | `### Chain Statistics` if path starts with `/api/v2/`; `### Stats Service` if path starts with `/stats-service/` |
 | `Transactions` | `transactions.md` | `### Transactions` |
-| `User Operations` | `transactions.md` | `### User Operations` |
+| `User Operations` | `user-operations.md` | `### User Operations` |
 | `Tokens & NFTs` | `tokens.md` | `### Tokens` |
 
 **Fallback for unknown `group` values:**
@@ -167,6 +168,8 @@ Extract path parameters from `{param_name}` placeholders in the path. For each:
 | `Description` | Empty string |
 
 If the path contains no `{…}` placeholders, write `*None*` in the parameters section.
+
+Path parameters whose name is in `EXCLUDED_PARAM_NAMES` (from `common.py`; currently `apikey`, `key`) are dropped by exact-name match, consistent with `api-file-generator.py` (`api-file-generator-spec.md` Section 8.3). Catalog paths use descriptive path parameters only, so this filter normally has no effect; it is applied defensively so the two generators stay aligned. If dropping leaves no path parameters, write `*None*`.
 
 **Parameter table format:**
 
@@ -257,7 +260,7 @@ If a section for the target file already exists in the index:
 - `/full/api/path/{param}`: Description text.
 ```
 
-Path only — no HTTP method prefix. Description is the full `description` value from the catalog entry.
+Path only — no HTTP method prefix. The index description is the **first paragraph** of the catalog entry's `description` (via the shared `first_paragraph` helper), matching the generator's index behaviour. The full description is retained in the detail file entry (Section 7.2). For the current catalog every description is a single short paragraph, so this is a no-op today; it keeps the two scripts consistent if a multi-paragraph catalog description is ever added.
 
 ### 9.2 Adding a New Chain Section
 
@@ -272,7 +275,7 @@ If no section exists for a new chain file, insert a new H2 section in alphabetic
 
 **Display name** for the section heading = the H3 heading assigned to the file (from classification rules in Section 6).
 
-No preamble text is added for new sections. Sections appear after the fixed topic sections (`Blocks`, `Transactions`, `Addresses`, `Tokens`, `Smart Contracts`, `Search`, `Stats`, `Configuration`) and are ordered alphabetically by filename among chain-specific sections.
+No preamble text is added for new sections. Sections appear after the fixed topic sections (`Blocks`, `Transactions`, `Addresses`, `Tokens`, `Smart Contracts`, `Search`, `Stats`) and are ordered alphabetically by filename among chain-specific sections.
 
 ## 10. Script Interface
 
@@ -321,11 +324,10 @@ Reading existing index: 93 documented paths
 Identifying missing endpoints: 35
 
 Classifying...
-  transactions.md  (### User Operations):  1 endpoint
+  user-operations.md (### User Operations):  1 endpoint
   arbitrum.md      (### Arbitrum):          5 endpoints
   celo.md          (### Celo):              5 endpoints
   optimism.md      (### Optimism):          5 endpoints
-  polygon-zkevm.md (### Polygon zkEVM):     4 endpoints
   scroll.md        (### Scroll):            4 endpoints
   zksync.md        (### ZkSync):            2 endpoints
   shibarium.md     (### Shibarium):         2 endpoints  [NEW FILE]
@@ -334,11 +336,10 @@ Classifying...
   zilliqa.md       (### Zilliqa):           2 endpoints  [NEW FILE]
 
 Patching API files...
-  Patched: blockscout-api/transactions.md (added 1 endpoint to ### User Operations)
+  Patched: blockscout-api/user-operations.md (added 1 endpoint to ### User Operations)
   Patched: blockscout-api/arbitrum.md (added 5 endpoints to ### Arbitrum)
   Patched: blockscout-api/celo.md (added 5 endpoints to ### Celo)
   Patched: blockscout-api/optimism.md (added 5 endpoints to ### Optimism)
-  Patched: blockscout-api/polygon-zkevm.md (added 4 endpoints to ### Polygon zkEVM)
   Patched: blockscout-api/scroll.md (added 4 endpoints to ### Scroll)
   Patched: blockscout-api/zksync.md (added 2 endpoints to ### ZkSync)
   Created: blockscout-api/shibarium.md (2 endpoints)

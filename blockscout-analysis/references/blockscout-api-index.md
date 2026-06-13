@@ -7,7 +7,7 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 
 ## [Blocks](blockscout-api/blocks.md)
 
-- `/api/v2/blocks`: Retrieves a paginated list of blocks with optional filtering by block type.
+- `/api/v2/blocks`: Retrieves a paginated list of blocks ordered by descending block number.
 - `/api/v2/blocks/{block_hash_or_number_param}/internal-transactions`: Retrieves internal transactions included in a specific block with optional filtering by type and call type.
 - `/api/v2/blocks/{block_hash_or_number_param}/transactions`: Retrieves transactions included in a specific block, ordered by transaction index.
 - `/api/v2/blocks/{block_hash_or_number_param}/withdrawals`: Retrieves withdrawals processed in a specific block (typically for proof-of-stake networks).
@@ -15,19 +15,38 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 
 ## [Transactions](blockscout-api/transactions.md)
 
+- `/api/v2/advanced-filters`: Returns a paginated, mixed list of activity — native value transfers, internal transactions and token transfers — filtered by transaction type, contract method, time window, address relations, value range and/or token contract. The response also echoes the resolved human-readable names of the methods and tokens referenced in the request filters.
+- `/api/v2/advanced-filters/methods`: Returns a list of known contract methods. When the `q` parameter is provided, searches for a single method by its 4-byte selector or name. Without `q`, returns the default list of popular methods.
 - `/api/v2/internal-transactions`: Retrieves a paginated list of internal transactions. Internal transactions are generated during contract execution and not directly recorded on the blockchain.
-- `/api/v2/proxy/account-abstraction/operations/{user_operation_hash}`: Get details for a specific User Operation by its hash.
 - `/api/v2/transactions`: Retrieves a paginated list of transactions with optional filtering by status, type, and method.
+- `/api/v2/transactions/execution-node/{execution_node_hash_param}`: Retrieves transactions that were executed on the specified execution node.
 - `/api/v2/transactions/stats`: Retrieves statistics for transactions, including counts and fee summaries for the last 24 hours.
 - `/api/v2/transactions/watchlist`: Retrieves transactions in the authenticated user's watchlist.
 - `/api/v2/transactions/{transaction_hash_param}/external-transactions`: Retrieves external transactions that are linked to the specified transaction (e.g., Solana transactions in `neon` chain type).
+- `/api/v2/transactions/{transaction_hash_param}/fhe-operations`: Retrieves Fully Homomorphic Encryption (FHE) operations parsed from transaction logs. Includes operation details, HCU (Homomorphic Compute Unit) costs, operation types, and related metadata.
 - `/api/v2/transactions/{transaction_hash_param}/internal-transactions`: Retrieves internal transactions generated during the execution of a specific transaction. Useful for analyzing contract interactions and debugging failed transactions.
 - `/api/v2/transactions/{transaction_hash_param}/logs`: Retrieves event logs emitted during the execution of a specific transaction. Logs contain information about contract events and state changes.
 - `/api/v2/transactions/{transaction_hash_param}/raw-trace`: Retrieves the raw execution trace for a transaction, showing the step-by-step execution path and all contract interactions.
 - `/api/v2/transactions/{transaction_hash_param}/state-changes`: Retrieves state changes (balance changes, token transfers) caused by a specific transaction.
 - `/api/v2/transactions/{transaction_hash_param}/summary`: Retrieves a human-readable summary of what a transaction did, presented in natural language.
 - `/api/v2/transactions/{transaction_hash_param}/token-transfers`: Retrieves token transfers that occurred within a specific transaction, with optional filtering by token type.
-- `/api?module=logs&action=getLogs`: Returns event logs filtered by block range, optional contract address, and up to four topic values. Results are capped at 1,000 entries.
+- `/api?module=logs&action=getLogs`: Returns event logs filtered by block range, optional contract address, and up to four topic values.
+
+## [User Operations](blockscout-api/user-operations.md)
+
+- `/api/v2/proxy/account-abstraction/accounts`: Retrieves a list of account abstraction wallets.
+- `/api/v2/proxy/account-abstraction/accounts/{address_hash_param}`: Retrieves an account abstraction wallet by its address hash.
+- `/api/v2/proxy/account-abstraction/bundlers`: Retrieves a list of top bundlers.
+- `/api/v2/proxy/account-abstraction/bundlers/{address_hash_param}`: Retrieves a bundler by its address hash.
+- `/api/v2/proxy/account-abstraction/bundles`: Retrieves a list of recent bundles.
+- `/api/v2/proxy/account-abstraction/factories`: Retrieves a list of top wallet factories.
+- `/api/v2/proxy/account-abstraction/factories/{address_hash_param}`: Retrieves a factory by its address hash.
+- `/api/v2/proxy/account-abstraction/operations`: Retrieves a list of recent user operations.
+- `/api/v2/proxy/account-abstraction/operations/{operation_hash_param}`: Retrieves a user operation by its hash.
+- `/api/v2/proxy/account-abstraction/operations/{operation_hash_param}/summary`: Retrieves a human-readable summary of what a user operation did, presented in natural language.
+- `/api/v2/proxy/account-abstraction/paymasters`: Retrieves a list of top paymasters.
+- `/api/v2/proxy/account-abstraction/paymasters/{address_hash_param}`: Retrieves a paymaster by its address hash.
+- `/api/v2/proxy/account-abstraction/status`: Retrieves the status of the account abstraction microservice.
 
 ## [Addresses](blockscout-api/addresses.md)
 
@@ -46,7 +65,7 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 - `/api/v2/addresses/{address_hash_param}/tokens`: Retrieves token balances for a specific address with pagination and filtering by token type. Useful for displaying large token portfolios.
 - `/api/v2/addresses/{address_hash_param}/transactions`: Retrieves transactions involving a specific address, with optional filtering for transactions sent from or to the address.
 - `/api/v2/addresses/{address_hash_param}/withdrawals`: Retrieves withdrawals involving a specific address, typically for proof-of-stake networks supporting validator withdrawals.
-- `/api?module=account&action=eth_get_balance`: Returns the ETH balance of an address as a hex-encoded wei value (0x-prefixed). Decode from hexadecimal to get the decimal balance in wei. Supports historical queries via the `block` parameter (e.g. a decimal block number).
+- `/api?module=account&action=eth_get_balance`: Returns the ETH balance of an address in an Ethereum-compatible hex format (0x-prefixed).
 
 ## [Tokens](blockscout-api/tokens.md)
 
@@ -87,44 +106,40 @@ Use this index to find available endpoints for the `direct_api_call` Blockscout 
 - `/api/v2/stats/charts/secondary-coin-market`: Returns market history for the secondary coin used for charting.
 - `/api/v2/stats/charts/transactions`: Retrieves time series data of daily transaction counts for rendering charts.
 - `/api/v2/stats/hot-smart-contracts`: Retrieves paginated list of hot smart-contracts
-- `/stats-service/api/v1/counters`
-- `/stats-service/api/v1/lines`
-- `/stats-service/api/v1/lines/{name}`
-- `/stats-service/api/v1/pages/contracts`
-- `/stats-service/api/v1/pages/interchain/main`
-- `/stats-service/api/v1/pages/main`
-- `/stats-service/api/v1/pages/multichain/main`
-- `/stats-service/api/v1/pages/transactions`
-- `/stats-service/api/v1/update-status`
-
-## [Configuration](blockscout-api/config.md)
-
-- `/api/v2/config/backend`: Returns non-secret backend environment variables in the snake case (e.g., chain_type).
-- `/api/v2/config/backend-version`: Returns application backend version string.
-- `/api/v2/config/db-background-migrations`: Returns list of background migrations that are not yet completed.
-- `/api/v2/config/indexer`: Returns config of indexer.
-- `/api/v2/config/public-metrics`: Returns update period / configuration for public metrics.
-- `/api/v2/config/smart-contracts/languages`: Returns list of smart contract languages supported by the database schema.
+- `/stats-service/api/v1/counters`: Returns all available counter stats for the stats page.
+- `/stats-service/api/v1/lines`: Returns metadata (title, description, available resolutions) for all line charts, organized into sections.
+- `/stats-service/api/v1/lines/{name}`: Returns data points for a specific line chart, with optional date range and resolution filtering.
+- `/stats-service/api/v1/pages/contracts`: Returns stats to be displayed on the contracts page.
+- `/stats-service/api/v1/pages/interchain/main`: Returns interchain messaging stats to be displayed on the main page of interchain indexer.
+- `/stats-service/api/v1/pages/main`: Returns stats to be displayed on the main page of indexer.
+- `/stats-service/api/v1/pages/multichain/main`: Returns multichain-aggregated stats to be displayed on the main page of multichain indexer.
+- `/stats-service/api/v1/pages/transactions`: Returns stats to be displayed on the transactions page.
+- `/stats-service/api/v1/update-status`: Returns the current status of chart data updates, broken down by indexing dependency type (independent, blocks, internal transactions, etc.).
 
 ## [Arbitrum](blockscout-api/arbitrum.md)
 
-- `/api/v2/arbitrum/batches/{batch_number}`: Get information for a specific Arbitrum batch.
-- `/api/v2/arbitrum/messages/from-rollup`: Get L2 to L1 messages for Arbitrum.
-- `/api/v2/arbitrum/messages/to-rollup`: Get L1 to L2 messages for Arbitrum.
-- `/api/v2/arbitrum/messages/withdrawals/{transaction_hash}`: Get L2 to L1 messages for a specific transaction hash on Arbitrum.
+- `/api/v2/arbitrum/batches`: Retrieves a paginated list of Arbitrum batches committed to the Parent chain.
+- `/api/v2/arbitrum/batches/count`: Retrieves the total count of Arbitrum batches committed to the Parent chain.
+- `/api/v2/arbitrum/batches/da/anytrust/{data_hash}`: Retrieves an Arbitrum batch associated with the given AnyTrust data hash. By default, returns the most recently associated batch. When `type=all`, returns a paginated list of all batches referencing this data hash.
+- `/api/v2/arbitrum/batches/da/celestia/{height}/{transaction_commitment}`: Retrieves an Arbitrum batch whose data availability blob is identified by the given Celestia block height and transaction commitment hash.
+- `/api/v2/arbitrum/batches/da/eigenda/{data_hash}`: Retrieves an Arbitrum batch associated with the given EigenDA data hash. By default, returns the most recently associated batch. When `type=all`, returns a paginated list of all batches referencing this data hash.
+- `/api/v2/arbitrum/batches/{batch_number}`: Retrieves detailed information about an Arbitrum batch by its number.
+- `/api/v2/arbitrum/messages/claim/{message_id}`: Returns the ABI-encoded calldata and outbox contract address required to execute a Rollup withdrawal on the Parent chain.
+- `/api/v2/arbitrum/messages/withdrawals/{transaction_hash}`: Returns the list of Rollup withdrawal messages (L2ToL1Tx events) emitted by the given transaction.
+- `/api/v2/arbitrum/messages/{direction}`: Retrieves a paginated list of Arbitrum cross-chain messages filtered by the specified direction.
+- `/api/v2/arbitrum/messages/{direction}/count`: Retrieves the total count of Arbitrum cross-chain messages for the specified direction.
 - `/api/v2/blocks/arbitrum-batch/{batch_number_param}`: Retrieves L2 blocks that are bound to a specific Arbitrum batch number.
-- `/api/v2/main-page/arbitrum/batches/latest-number`: Get the latest committed batch number for Arbitrum.
+- `/api/v2/main-page/arbitrum/batches/committed`: Retrieves a list of Arbitrum batches that have been committed to the Parent chain, displayed on the main page.
+- `/api/v2/main-page/arbitrum/batches/latest-number`: Retrieves the number of the most recent Arbitrum batch submitted to the Parent chain. Returns 0 if no batches exist.
+- `/api/v2/main-page/arbitrum/messages/to-rollup`: Retrieves the most recent relayed messages from Parent chain to Rollup, displayed on the main page.
 - `/api/v2/transactions/arbitrum-batch/{batch_number_param}`: Retrieves L2 transactions bound to a specific Arbitrum batch number.
 
 ## [Celo](blockscout-api/celo.md)
 
 - `/api/v2/addresses/{address_hash_param}/celo/election-rewards`: Retrieves Celo election rewards for a specific address.
-- `/api/v2/celo/epochs`: Get the latest finalized epochs for Celo.
-- `/api/v2/celo/epochs/{epoch_number}`: Get information for a specific Celo epoch.
-- `/api/v2/celo/epochs/{epoch_number}/election-rewards/group`: Get validator group rewards for a specific Celo epoch.
-- `/api/v2/celo/epochs/{epoch_number}/election-rewards/validator`: Get validator rewards for a specific Celo epoch.
-- `/api/v2/celo/epochs/{epoch_number}/election-rewards/voter`: Get voter rewards for a specific Celo epoch.
-- `/api/v2/config/celo`: Returns Celo-specific configuration (l2 migration block).
+- `/api/v2/celo/epochs`: Retrieves a paginated list of Celo epochs.
+- `/api/v2/celo/epochs/{number}`: Retrieves detailed information about a Celo epoch.
+- `/api/v2/celo/epochs/{number}/election-rewards/{type}`: Retrieves a paginated list of election rewards for a Celo epoch and reward type.
 
 ## [Ethereum PoS Chains](blockscout-api/ethereum.md)
 
@@ -169,21 +184,16 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 - `/api/v2/optimism/withdrawals/count`: Retrieves a size of the withdrawals list.
 - `/api/v2/transactions/optimism-batch/{batch_number_param}`: Retrieves L2 transactions bound to a specific Optimism batch number.
 
-## [Polygon zkEVM](blockscout-api/polygon-zkevm.md)
-
-- `/api/v2/transactions/zkevm-batch/{batch_number_param}`: Retrieves L2 transactions bound to a specific Polygon ZkEVM batch number.
-- `/api/v2/zkevm/batches/confirmed`: Get the latest confirmed batches for zkEVM.
-- `/api/v2/zkevm/batches/{batch_number}`: Get information for a specific zkEVM batch.
-- `/api/v2/zkevm/deposits`: Get deposits for zkEVM.
-- `/api/v2/zkevm/withdrawals`: Get withdrawals for zkEVM.
-
 ## [Scroll](blockscout-api/scroll.md)
 
 - `/api/v2/blocks/scroll-batch/{batch_number_param}`: Retrieves L2 blocks that are bound to a specific Scroll batch number.
-- `/api/v2/scroll/batches`: Get the latest committed batches for Scroll.
-- `/api/v2/scroll/batches/{batch_number}`: Get information for a specific Scroll batch.
-- `/api/v2/scroll/deposits`: Get L1 to L2 messages (deposits) for Scroll.
-- `/api/v2/scroll/withdrawals`: Get L2 to L1 messages (withdrawals) for Scroll.
+- `/api/v2/scroll/batches`: Retrieves a paginated list of batches.
+- `/api/v2/scroll/batches/count`: Retrieves a size of the batch list.
+- `/api/v2/scroll/batches/{number}`: Retrieves batch info by the given number.
+- `/api/v2/scroll/deposits`: Retrieves a paginated list of deposits.
+- `/api/v2/scroll/deposits/count`: Retrieves a size of the deposits list.
+- `/api/v2/scroll/withdrawals`: Retrieves a paginated list of withdrawals.
+- `/api/v2/scroll/withdrawals/count`: Retrieves a size of the withdrawals list.
 - `/api/v2/transactions/scroll-batch/{batch_number_param}`: Retrieves L2 transactions bound to a specific Scroll batch number.
 
 ## [Shibarium](blockscout-api/shibarium.md)
@@ -197,8 +207,8 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 
 ## [Zilliqa](blockscout-api/zilliqa.md)
 
-- `/api/v2/validators/zilliqa`: Get the list of validators for Zilliqa.
-- `/api/v2/validators/zilliqa/{validator_public_key}`: Get information for a specific Zilliqa validator.
+- `/api/v2/validators/zilliqa`: Retrieves the list of Zilliqa validators.
+- `/api/v2/validators/zilliqa/{bls_public_key}`: Retrieves Zilliqa validator detailed info by the given BLS public key.
 
 ## [ZkSync](blockscout-api/zksync.md)
 

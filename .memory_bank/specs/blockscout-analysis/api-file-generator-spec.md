@@ -25,18 +25,18 @@ blockscout-analysis/
     blockscout-api-index.md   # Master entry point: all endpoints with descriptions, links to blockscout-api/ files
     blockscout-api/
       blocks.md             # Block and block-scoped sub-endpoints
-      transactions.md       # Transaction, internal-transaction, and global token-transfer endpoints
+      transactions.md       # Transaction, internal-transaction, advanced-filter, and global token-transfer endpoints
+      user-operations.md    # ERC-4337 account-abstraction endpoints
       addresses.md          # Address endpoints
       tokens.md             # Token, NFT, and global token-transfer listing endpoints
       smart-contracts.md    # Smart contract endpoints
       search.md             # Search endpoints
       stats.md              # Chain statistics (main-page + stats) and Stats Service endpoints
-      config.md             # Configuration endpoints (excluding CSV configuration)
       {chain}.md            # One file per chain-specific group identified by path classification
                             # (see Section 6.1 for the classification pipeline)
 ```
 
-The **eight** topic files (`blocks.md` through `config.md`) and `stats.md` are always produced. There is no standalone `withdrawals.md` — validator withdrawal endpoints (`/v2/withdrawals`, `/v2/withdrawals/counters`) are classified to `ethereum.md` because they are specific to Ethereum proof-of-stake networks.
+The **eight** topic files (`blocks.md` through `stats.md`, including `user-operations.md`) are always produced. There is no standalone `withdrawals.md` — validator withdrawal endpoints (`/v2/withdrawals`, `/v2/withdrawals/counters`) are classified to `ethereum.md` because they are specific to Ethereum proof-of-stake networks. Configuration endpoints (`/v2/config/...`) are not documented at all — they are excluded during filtering (Section 6.0).
 
 Chain-specific files are produced dynamically by path-based classification (Section 6.1). Adding new chain-prefixed endpoints or new swagger variants automatically produces new files without any script changes.
 
@@ -83,12 +83,13 @@ The classification tables and core classification function are defined in the sh
 |----------|-------------|
 | `REFERENCES_DIR` | `Path("blockscout-analysis/references")` |
 | `API_DIR` | `REFERENCES_DIR / "blockscout-api"` |
-| `TOPIC_FILE_ORDER` | Ordered list of 8 canonical topic filenames |
+| `TOPIC_FILE_ORDER` | Ordered list of 9 canonical topic filenames (includes `user-operations.md`) |
 | `TOPIC_HEADINGS` | Topic filename → display name / default H3 heading (stats.md maps to `"Stats"`) |
-| `CHAIN_PREFIXES` | Pass 1 chain prefix table — raw swagger paths (no `/api` prefix), 24 entries |
+| `CHAIN_PREFIXES` | Pass 1 chain prefix table — raw swagger paths (no `/api` prefix), 21 entries |
 | `CHAIN_KEYWORD_RULES` | Pass 2 keyword-in-segment rules (`celo`, `beacon`) |
-| `TOPIC_PREFIXES` | Pass 3 topic prefix table — raw swagger paths, 12 entries |
-| `CHAIN_FILE_CONFIG` | Chain file heading/preamble overrides (`ethereum.md`, `polygon-zkevm.md`, `zksync.md`) |
+| `TOPIC_PREFIXES` | Pass 3 topic prefix table — raw swagger paths, 14 entries |
+| `CHAIN_FILE_CONFIG` | Chain file heading/preamble overrides (`ethereum.md`, `zksync.md`) |
+| `EXCLUDED_PARAM_NAMES` | Query/path parameter names dropped from output by exact-name match (`apikey`, `key`); see Section 8.3 |
 
 All prefix tables store raw swagger paths (e.g. `/v2/blocks/arbitrum-batch/`). The MCP unlock patch derives `/api`-prefixed variants at module load time.
 
@@ -101,6 +102,7 @@ All prefix tables store raw swagger paths (e.g. `/v2/blocks/arbitrum-batch/`). T
 | `chain_file_info(filename)` | `str → dict` | Return `{heading, preamble}` for a chain file, using `CHAIN_FILE_CONFIG` overrides or auto-deriving from filename |
 | `heading_for(filename)` | `str → str` | Return H3 heading for any file (topic or chain), combining `TOPIC_HEADINGS`, `CHAIN_FILE_CONFIG`, and auto-derive |
 | `format_index_line(path, desc)` | `(str, str) → str` | Format `` - `{path}`: {desc} `` or `` - `{path}` `` (omits colon when desc is empty) |
+| `first_paragraph(text)` | `str → str` | Return the first paragraph of `text` — the text up to the first blank line — collapsed to a single line (internal line wraps and whitespace runs become single spaces). A single-paragraph description is returned whole. Used for index line items. |
 
 Scripts import these and use them directly. Script-specific constants (e.g. `STATS_CHAIN_SECTION`, `COMMON_GROUP_MAP`) remain in the consuming script.
 
@@ -112,8 +114,10 @@ Applied in order, **before classification**. Excluded records are silently dropp
 
 1. **Method filter:** Skip all records where `method` is not `GET`. Applies to both endpoint maps.
 2. **CSV export filter:** Skip main-indexer records whose swagger path ends with `/csv` (e.g., `/v2/addresses/{addr}/transactions/csv`). These bulk export endpoints are not useful for agent queries.
-3. **CSV configuration filter:** Skip the main-indexer record with path `/v2/config/csv-export` exactly.
-4. **Stats-service health filter:** Skip the stats-service record with path `/health` exactly.
+3. **Configuration filter:** Skip main-indexer records whose path is `/v2/config` or starts with `/v2/config/` (e.g., `/v2/config/backend`, `/v2/config/indexer`, `/v2/config/public-metrics`, `/v2/config/smart-contracts/languages`, the CSV-export config `/v2/config/csv-export`, and the chain-specific `/v2/config/celo`). These describe the Blockscout instance's own configuration, not on-chain data, so they are not useful for agent queries. Because every configuration endpoint is dropped here, no configuration topic file or index section is produced.
+4. **CSV export job filter:** Skip main-indexer records whose path is `/v2/csv-exports` or starts with `/v2/csv-exports/` (e.g., `/v2/csv-exports/{uuid_param}`). These are async bulk-export job endpoints, consistent with the CSV exclusions above.
+5. **Legacy endpoint filter:** Skip main-indexer records whose path starts with `/legacy/` (e.g., `/legacy/logs/get-logs`, `/legacy/block/eth-block-number`). These are Etherscan-compatibility endpoints; the curated JSON-RPC patch (`rpc-api-patch-spec.md`) is their canonical agent-facing form.
+6. **Stats-service health filter:** Skip the stats-service record with path `/health` exactly.
 
 Every remaining endpoint is assigned to exactly one output file. No endpoint appears in more than one file.
 
@@ -135,7 +139,6 @@ The chain prefix table is checked before topic prefixes so chain-scoped paths al
 | `/v2/transactions/arbitrum-batch/` | `arbitrum.md` | Cross-cutting batch path |
 | `/v2/transactions/optimism-batch/` | `optimism.md` | Cross-cutting batch path |
 | `/v2/transactions/scroll-batch/` | `scroll.md` | Cross-cutting batch path |
-| `/v2/transactions/zkevm-batch/` | `polygon-zkevm.md` | Cross-cutting batch path |
 | `/v2/transactions/zksync-batch/` | `zksync.md` | Cross-cutting batch path |
 | `/v2/main-page/arbitrum/` | `arbitrum.md` | Main-page chain reference |
 | `/v2/main-page/optimism-deposits` | `optimism.md` | Main-page chain reference |
@@ -149,7 +152,6 @@ The chain prefix table is checked before topic prefixes so chain-scoped paths al
 | `/v2/optimism/` | `optimism.md` | Direct chain path |
 | `/v2/scroll/` | `scroll.md` | Direct chain path |
 | `/v2/shibarium/` | `shibarium.md` | Direct chain path |
-| `/v2/zkevm/` | `polygon-zkevm.md` | Direct chain path |
 | `/v2/zksync/` | `zksync.md` | Direct chain path |
 | `/v2/withdrawals` | `ethereum.md` | PoS validator withdrawals |
 
@@ -161,7 +163,7 @@ For endpoints not matched by Pass 1, check whether a chain keyword appears as a 
 
 | Keyword | Output file | Example matches |
 |---------|-------------|-----------------|
-| `celo` | `celo.md` | `/v2/addresses/{addr}/celo/election-rewards`, `/v2/config/celo` |
+| `celo` | `celo.md` | `/v2/addresses/{addr}/celo/election-rewards` |
 | `beacon` | `ethereum.md` | `/v2/{base}/{param}/beacon/...` |
 
 Additionally, if the path ends with `/blobs`, route to `ethereum.md` (EIP-4844 blob transaction data).
@@ -190,19 +192,20 @@ The `CHAIN_FILE_CONFIG` constant in `common.py` overrides the auto-derived headi
 | Output file | Override |
 |-------------|----------|
 | `ethereum.md` | Heading: `Ethereum PoS Chains`; Preamble: see Section 9.3 |
-| `polygon-zkevm.md` | Heading: `Polygon zkEVM` (auto-derive produces `Polygon Zkevm`) |
 | `zksync.md` | Heading: `ZkSync` (auto-derive produces `Zksync`) |
 
 When no override exists for a chain file, the heading is auto-derived from the filename: `filename.replace('.md', '').replace('-', ' ').title()`. The `heading_for()` function in `common.py` encapsulates this logic.
 
 ### 6.2 Topic-File Prefix Table (Pass 3)
 
-This pass runs only after the chain-specific passes (1 and 2) found no match. It classifies endpoints into the eight fixed topic files by longest matching prefix on the raw swagger path (before transformation). The table is defined as `TOPIC_PREFIXES` in `common.py`.
+This pass runs only after the chain-specific passes (1 and 2) found no match. It classifies endpoints into the nine fixed topic files by longest matching prefix on the raw swagger path (before transformation). The table is defined as `TOPIC_PREFIXES` in `common.py`.
 
 | Swagger path prefix | Output file | Notes |
 |---------------------|-------------|-------|
 | `/v2/blocks/` | `blocks.md` | Block-scoped sub-endpoints |
 | `/v2/internal-transactions` | `transactions.md` | Top-level internal-tx list |
+| `/v2/advanced-filters` | `transactions.md` | Mixed tx / internal-tx / token-transfer activity filter (and `/methods`) |
+| `/v2/proxy/account-abstraction/` | `user-operations.md` | ERC-4337 user operations, bundlers, paymasters, factories, accounts |
 | `/v2/transactions/` | `transactions.md` | |
 | `/v2/token-transfers` | `tokens.md` | Global token-transfer list belongs with tokens |
 | `/v2/addresses/` | `addresses.md` | |
@@ -212,7 +215,6 @@ This pass runs only after the chain-specific passes (1 and 2) found no match. It
 | `/v1/search` | `search.md` | |
 | `/v2/stats` | `stats.md` | |
 | `/v2/main-page/` | `stats.md` | |
-| `/v2/config/` | `config.md` | |
 
 Note: `/v2/withdrawals` is **not** in this table — it is handled by Pass 1 (chain prefix) which routes it to `ethereum.md`.
 
@@ -243,7 +245,7 @@ When the `description` field is an empty string, the script must fall back to th
 3. Read the `summary` field. If present and non-empty, use it as the description.
 4. If `summary` is also absent or empty, use an empty string.
 
-Descriptions must be stored and written **in full without any truncation**, regardless of length. This applies to the API files and to the index file.
+In the API (detail) files, the resolved description is written **in full without any truncation**, regardless of length. The master index instead carries only the **first paragraph** of each description (via `first_paragraph`, Section 5) so the index stays terse while the detail file keeps the complete text — see the index line rules in Section 10.2.
 
 ## 8. Parameter Extraction
 
@@ -282,6 +284,8 @@ For each entry where `in` is `path` or `query`:
 | `description` | `Description` | Empty string if absent |
 
 Skip entries where `in` is `header` or `cookie`.
+
+**Excluded parameter names.** After the `in` filter, also skip any entry whose `name` is in the excluded set `EXCLUDED_PARAM_NAMES` (defined in `common.py`; currently `apikey` and `key`). These are authentication/access query parameters that the swagger source declares on nearly every endpoint; the agent never supplies them via `direct_api_call` (the MCP server injects them), so documenting them on every endpoint only repeats two rows hundreds of times and wastes the agent's context. Matching is by **exact name only** — substrings such as `key_bytes` or `validator_public_key` are legitimate parameters and must be preserved.
 
 ### 8.4 Parameter Table Output
 
@@ -323,12 +327,12 @@ Description text.
 |---|---|
 | `blocks.md` | `### Blocks` |
 | `transactions.md` | `### Transactions` |
+| `user-operations.md` | `### User Operations` |
 | `addresses.md` | `### Addresses` |
 | `tokens.md` | `### Tokens` |
 | `smart-contracts.md` | `### Smart Contracts` |
 | `search.md` | `### Search` |
 | `stats.md` | `### Chain Statistics` followed by `### Stats Service` |
-| `config.md` | `### Configuration` |
 
 `stats.md` has two sections: `### Chain Statistics` contains endpoints from the main-indexer default variant (paths starting with `/v2/stats` and `/v2/main-page/`); `### Stats Service` contains all stats-service endpoints.
 
@@ -386,12 +390,12 @@ These endpoints are only available on chains that use Ethereum proof-of-stake co
 
 - Section headers are H2 with a markdown link to the file using a relative path from `references/blockscout-api-index.md`: `## [Display Name](blockscout-api/filename.md)`.
 - **Sections appear in this order:**
-  1. **Topic files** in fixed order: Blocks, Transactions, Addresses, Tokens, Smart Contracts, Search, Stats, Configuration. (These are always present. There is no Withdrawals topic file — those endpoints appear in the Ethereum PoS Chains section.)
+  1. **Topic files** in fixed order: Blocks, Transactions, User Operations, Addresses, Tokens, Smart Contracts, Search, Stats. (These are always present. There is no Withdrawals topic file — those endpoints appear in the Ethereum PoS Chains section. Configuration endpoints are excluded entirely; see Section 6.0.)
   2. **Chain-specific files** sorted alphabetically by filename (e.g., `arbitrum.md` before `celo.md` before `ethereum.md`). Only files that contain at least one endpoint are included.
 - **Display name** for a section is the H3 section heading associated with that file (derived at classification time per Section 6.1 / Section 9.2). Examples: `Blocks`, `Ethereum PoS Chains`, `Arbitrum`.
 - **Preamble in index:** For any chain-specific file that has a preamble defined in `CHAIN_FILE_CONFIG` (Section 6.1 / Section 9.3), include the same preamble text immediately after the H2 section heading and before the first endpoint line item. This ensures agents reading the index understand the context of those endpoints without opening the file. Currently only `ethereum.md` has a preamble.
-- Each line item format: `` - `/full/transformed/path`: <description> `` — path only, **no HTTP method prefix**.
-- The description must be the **full, untruncated** text — use the value resolved by the description extraction procedure in Section 7 (with summary fallback).
+- Each line item format: `` - `/full/transformed/path`: <first paragraph> `` — path only, **no HTTP method prefix**.
+- The index description is the **first paragraph** of the value resolved by the description extraction procedure in Section 7 (with summary fallback), computed via `first_paragraph` (Section 5). The full, untruncated description stays in the detail file. The first paragraph is the text up to the first blank line; internal line wraps are collapsed to single spaces, so each index line item is always a single physical line. A single-paragraph description (even one with several sentences) is kept whole — only subsequent paragraphs are dropped.
 - Endpoints with no resolved description omit the colon and description suffix entirely, producing `` - `/full/transformed/path` `` with no trailing whitespace.
 - Within each section, endpoints follow the same sort order as in the API file (Section 9.4).
 - When new variants are added and new chain-specific files are generated, they appear automatically in the index in their correct alphabetical position — no spec or code changes required.
@@ -440,12 +444,10 @@ Classifying endpoints...
   smart-contracts.md: 4 endpoints
   search.md:          4 endpoints
   stats.md:           18 endpoints (9 chain stats + 9 stats service)
-  config.md:          4 endpoints
   arbitrum.md:        2 endpoints
   celo.md:            2 endpoints
   ethereum.md:        8 endpoints
   optimism.md:        2 endpoints
-  polygon-zkevm.md:   1 endpoint
   scroll.md:          2 endpoints
   zksync.md:          1 endpoint
 
@@ -471,18 +473,17 @@ blockscout-analysis/
     blockscout-api/
       blocks.md
       transactions.md
+      user-operations.md
       addresses.md
       tokens.md
       smart-contracts.md
       search.md
       stats.md
-      config.md
       arbitrum.md               # path-classified: /v2/arbitrum/, batch paths, main-page
       celo.md                   # path-classified: /v2/celo/, keyword match on /celo segment
       ethereum.md               # path-classified: /v2/beacon/, /v2/withdrawals, /blobs; custom heading + preamble
       mud.md                    # path-classified: /v2/mud/ only
       optimism.md               # path-classified: /v2/optimism/, batch paths, main-page
-      polygon-zkevm.md          # path-classified: /v2/zkevm/, batch paths; heading override
       scroll.md                 # path-classified: /v2/scroll/, batch paths
       zksync.md                 # path-classified: /v2/zksync/, batch paths, main-page; heading override
 ```

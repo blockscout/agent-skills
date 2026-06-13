@@ -8,10 +8,7 @@ Retrieves a limited set of recent blocks for display on the main page or dashboa
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/main-page/indexing-status
 
@@ -19,10 +16,7 @@ Retrieves the current status of blockchain data indexing by the BlockScout insta
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/main-page/transactions
 
@@ -30,10 +24,7 @@ Retrieves a limited set of recent transactions displayed on the home page.
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/main-page/transactions/watchlist
 
@@ -41,10 +32,7 @@ Retrieves a list of last 6 transactions from the current user's watchlist.
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/stats
 
@@ -52,10 +40,7 @@ Retrieves blockchain network statistics including total blocks, transactions, ad
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/stats/charts/market
 
@@ -63,10 +48,7 @@ Retrieves time series data of market information (daily closing price, market ca
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/stats/charts/secondary-coin-market
 
@@ -74,10 +56,7 @@ Returns market history for the secondary coin used for charting.
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/stats/charts/transactions
 
@@ -85,10 +64,7 @@ Retrieves time series data of daily transaction counts for rendering charts.
 
 - **Parameters**
 
-  | Name | Type | Required | Description |
-  | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
+  *None*
 
 #### GET /api/v2/stats/hot-smart-contracts
 
@@ -98,17 +74,9 @@ Retrieves paginated list of hot smart-contracts
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
-  | `sort` | `string` | No | Sort transactions by:
-* block_number - Sort by block number
-* value - Sort by transaction value
-* fee - Sort by transaction fee
-* balance - Sort by account balance
-* transactions_count - Sort by number of transactions on address
-* fiat_value - Sort by fiat value of the token transfer
-* holders_count - Sort by number of token holders
-* circulating_market_cap - Sort by circulating market cap of the token
+  | `sort` | `string` | No | Sort results by:
+* transactions_count - Sort by number of transactions
+* total_gas_used - Sort by total gas used
 Should be used together with `order` parameter.
  |
   | `order` | `string` | No | Sort order:
@@ -126,11 +94,16 @@ Should be used together with `sort` parameter.
 
 #### GET /stats-service/api/v1/counters
 
+Returns all available counter stats for the stats page.
+
 - **Parameters**
 
   *None*
 
 #### GET /stats-service/api/v1/lines
+
+Returns metadata (title, description, available resolutions) for all
+line charts, organized into sections.
 
 - **Parameters**
 
@@ -138,16 +111,21 @@ Should be used together with `sort` parameter.
 
 #### GET /stats-service/api/v1/lines/{name}
 
+Returns data points for a specific line chart, with optional date range
+and resolution filtering.
+
 - **Parameters**
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `name` | `string` | Yes |  |
+  | `name` | `string` | Yes | Identifier of the chart to retrieve (matches chart id). |
   | `from` | `string` | No | Default is first data point |
   | `to` | `string` | No | Default is last data point |
   | `resolution` | `string` | No |  |
 
 #### GET /stats-service/api/v1/pages/contracts
+
+Returns stats to be displayed on the contracts page.
 
 - **Parameters**
 
@@ -155,11 +133,15 @@ Should be used together with `sort` parameter.
 
 #### GET /stats-service/api/v1/pages/interchain/main
 
+Returns interchain messaging stats to be displayed on the main page of interchain indexer.
+
 - **Parameters**
 
   *None*
 
 #### GET /stats-service/api/v1/pages/main
+
+Returns stats to be displayed on the main page of indexer.
 
 - **Parameters**
 
@@ -167,17 +149,24 @@ Should be used together with `sort` parameter.
 
 #### GET /stats-service/api/v1/pages/multichain/main
 
+Returns multichain-aggregated stats to be displayed on the main page of multichain indexer.
+
 - **Parameters**
 
   *None*
 
 #### GET /stats-service/api/v1/pages/transactions
 
+Returns stats to be displayed on the transactions page.
+
 - **Parameters**
 
   *None*
 
 #### GET /stats-service/api/v1/update-status
+
+Returns the current status of chart data updates, broken down by
+indexing dependency type (independent, blocks, internal transactions, etc.).
 
 - **Parameters**
 

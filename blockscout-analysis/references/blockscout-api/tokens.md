@@ -10,8 +10,6 @@ Retrieves a paginated list of token transfers across all token types (ERC-20, ER
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `type` | `string` | No | Filter by token type. Comma-separated list of:
 * ERC-20 - Fungible tokens
 * ERC-721 - Non-fungible tokens
@@ -22,7 +20,7 @@ Retrieves a paginated list of token transfers across all token types (ERC-20, ER
 Example: `ERC-20,ERC-721` to show both fungible and NFT transfers
  |
   | `limit` | `integer` | No | Limit result items in the response |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `block_number` | `integer` | No | Block number for paging |
   | `batch_log_index` | `integer` | No | Batch log index for paging |
   | `batch_block_hash` | `string` | No | Batch block hash for paging |
@@ -37,8 +35,6 @@ Retrieves a paginated list of tokens with optional filtering by name, symbol, or
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `type` | `string` | No | Filter by token type. Comma-separated list of:
 * ERC-20 - Fungible tokens
 * ERC-721 - Non-fungible tokens
@@ -50,13 +46,8 @@ Example: `ERC-20,ERC-721` to show both fungible and NFT transfers
  |
   | `q` | `string` | No | Search query filter |
   | `limit` | `integer` | No | Limit result items in the response |
-  | `sort` | `string` | No | Sort transactions by:
-* block_number - Sort by block number
-* value - Sort by transaction value
-* fee - Sort by transaction fee
-* balance - Sort by account balance
-* transactions_count - Sort by number of transactions on address
-* fiat_value - Sort by fiat value of the token transfer
+  | `sort` | `string` | No | Sort results by:
+* fiat_value - Sort by fiat value
 * holders_count - Sort by number of token holders
 * circulating_market_cap - Sort by circulating market cap of the token
 Should be used together with `order` parameter.
@@ -83,8 +74,6 @@ Retrieves detailed information for a specific token identified by its contract a
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/tokens/{address_hash_param}/counters
 
@@ -95,8 +84,6 @@ Retrieves count statistics for a specific token, including holders count and tra
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
 
 #### GET /api/v2/tokens/{address_hash_param}/holders
 
@@ -106,8 +93,6 @@ Retrieves addresses holding a specific token, sorted by balance. Useful for anal
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `address_hash` | `string` | No | Address hash for paging |
   | `value` | `string` | No | Transaction value for paging |
@@ -121,8 +106,6 @@ Retrieves instances of NFTs for a specific token contract. This endpoint is prim
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `holder_address_hash` | `string` | No | Token holder address hash in the query |
   | `unique_token` | `string` | No | Token ID for paging |
@@ -135,8 +118,6 @@ Retrieves detailed information about a specific NFT instance, identified by its 
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `token_id_param` | `string` | Yes | Token ID for ERC-721/1155/404 tokens |
 
@@ -148,8 +129,6 @@ Retrieves current holders of a specific NFT instance. For ERC-721, this will typ
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `token_id_param` | `string` | Yes | Token ID for ERC-721/1155/404 tokens |
   | `address_hash` | `string` | No | Address hash for paging |
@@ -165,11 +144,9 @@ Retrieves token transfers for a specific token instance (by token address and to
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `token_id_param` | `string` | Yes | Token ID for ERC-721/1155/404 tokens |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `block_number` | `integer` | No | Block number for paging |
   | `token_id` | `string` | No | Token ID for paging |
 
@@ -181,8 +158,6 @@ Retrieves the total number of transfers for a specific NFT instance. Useful for 
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
   | `token_id_param` | `string` | Yes | Token ID for ERC-721/1155/404 tokens |
 
@@ -194,10 +169,8 @@ Retrieves transfer history for a specific NFT instance, showing ownership change
 
   | Name | Type | Required | Description |
   | ---- | ---- | -------- | ----------- |
-  | `apikey` | `string` | No | API key for rate limiting or for sensitive endpoints |
-  | `key` | `string` | No | Secret key for getting access to restricted resources |
   | `address_hash_param` | `string` | Yes | Address hash in the path |
-  | `index` | `integer` | No | Transaction index for paging |
+  | `index` | `integer` | No | Item index for paging |
   | `block_number` | `integer` | No | Block number for paging |
   | `batch_log_index` | `integer` | No | Batch log index for paging |
   | `batch_block_hash` | `string` | No | Batch block hash for paging |
